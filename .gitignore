@@ -46,3 +46,6 @@ __pycache__/
 
 # File yang dihasilkan oleh alat dokumentasi
 doc/
+
+# Direktori dan file di dalam folder `drivers` di dalam `TELEBLASTER PRO`
+TELEBLASTER PRO/drivers/
