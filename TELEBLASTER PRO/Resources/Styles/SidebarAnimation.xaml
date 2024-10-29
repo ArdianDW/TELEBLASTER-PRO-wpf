@@ -1,0 +1,11 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Storyboard x:Key="SidebarAnimation">
+            <DoubleAnimation Storyboard.TargetName="Sidebar" Storyboard.TargetProperty="Width" To="233" Duration="0:0:0.1" />
+            <DoubleAnimation Storyboard.TargetName="HamburgerButton" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.1" />
+    </Storyboard>
+    <Storyboard x:Key="HamburgerAnimation">
+        <DoubleAnimation Storyboard.TargetName="Sidebar" Storyboard.TargetProperty="Width" To="0" Duration="0:0:0.1" />
+        <DoubleAnimation Storyboard.TargetName="HamburgerButton" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.1" />
+    </Storyboard>
+</ResourceDictionary>

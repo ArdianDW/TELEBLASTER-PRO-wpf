@@ -1,0 +1,48 @@
+# Direktori dan file yang dihasilkan oleh Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Direktori dan file build
+bin/
+obj/
+out/
+
+# File log
+*.log
+
+# File sistem operasi
+.DS_Store
+Thumbs.db
+
+# File konfigurasi IDE
+.idea/
+*.iml
+
+# File yang dihasilkan oleh alat build
+*.class
+*.jar
+*.war
+*.ear
+
+# File sementara
+*.tmp
+*.temp
+*.swp
+
+# File yang dihasilkan oleh alat manajemen paket
+node_modules/
+vendor/
+
+# File lingkungan virtual Python
+venv/
+__pycache__/
+
+# File yang dihasilkan oleh alat kontrol versi
+*.orig
+*.rej
+
+# File yang dihasilkan oleh alat dokumentasi
+doc/

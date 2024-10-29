@@ -1,0 +1,106 @@
+﻿<UserControl x:Class="TELEBLASTER_PRO.Views.UserControls.Sidebar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TELEBLASTER_PRO.Views.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="233">
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Image Grid.Row="0" Source="{StaticResource logo-apk}" Width="225" Height="100"/>
+
+        <TextBlock Grid.Row="1" Text="Menu" FontWeight="Bold" Foreground="Gray" Margin="5" FontSize="16"/>
+
+        <Button Grid.Row="2" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToAccounts">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="89*"/>
+                    <ColumnDefinition Width="87*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_Accounts_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Accounts" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+        <Button Grid.Row="3" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToSendMessage">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_SendMessage_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Send Message" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+        <Button Grid.Row="4" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToGroupChannel">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_GroupChannelIcon_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Group &amp; Channel" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+        <Button Grid.Row="5" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToGroupFinder">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_GroupFinderIcon_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Group Finder" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+        <Button Grid.Row="6" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToInviteGroupChannel">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_InviteMemberIcon_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Invite Group &amp; Channel" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="13" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+        <Button Grid.Row="7" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToNumberGenerator">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_NumberGeneratorIcon_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Number Generator" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+       <Button Grid.Row="8" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToSettings">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_SettingsIcon_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Settings" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+    </Grid>
+</UserControl>

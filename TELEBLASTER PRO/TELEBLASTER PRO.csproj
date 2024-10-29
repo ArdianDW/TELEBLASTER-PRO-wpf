@@ -1,0 +1,79 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>TELEBLASTER_PRO</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Database\**" />
+    <EmbeddedResource Remove="Database\**" />
+    <None Remove="Database\**" />
+    <Page Remove="Database\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\Assets\Images\accounts.png" />
+    <None Remove="Resources\Assets\Images\community.png" />
+    <None Remove="Resources\Assets\Images\group.png" />
+    <None Remove="Resources\Assets\Images\help-center.png" />
+    <None Remove="Resources\Assets\Images\invite.png" />
+    <None Remove="Resources\Assets\Images\logo-teleblaster.png" />
+    <None Remove="Resources\Assets\Images\logo-teleblaster.svg" />
+    <None Remove="Resources\Assets\Images\number.png" />
+    <None Remove="Resources\Assets\Images\search.png" />
+    <None Remove="Resources\Assets\Images\send-button.png" />
+    <None Remove="Resources\Assets\Images\settings.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="pythonnet" Version="3.0.4" />
+    <PackageReference Include="SQLite" Version="3.13.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Assets\Images\accounts.png" />
+    <Resource Include="Resources\Assets\Images\community.png" />
+    <Resource Include="Resources\Assets\Images\help-center.png" />
+    <Resource Include="Resources\Assets\Images\invite.png" />
+    <Resource Include="Resources\Assets\Images\logo-teleblaster.png" />
+    <Resource Include="Resources\Assets\Images\logo-teleblaster.svg" />
+    <Resource Include="Resources\Assets\Images\number.png" />
+    <Resource Include="Resources\Assets\Images\search.png" />
+    <Resource Include="Resources\Assets\Images\send-button.png" />
+    <Resource Include="Resources\Assets\Images\settings.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Backend\addAccount.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Backend\functions.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Backend\teleblaster.db">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="PythonScripts\addAccount.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <_GlobalJsonStartingDir Remove="Database\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Assets\Images\group.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Drivers\" />
+  </ItemGroup>
+
+</Project>

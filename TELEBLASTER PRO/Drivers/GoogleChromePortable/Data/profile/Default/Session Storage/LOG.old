@@ -1,0 +1,17 @@
+2024/10/09-06:15:21.975 ddc Reusing MANIFEST D:\PKL\New folder\TELEBLASTER PRO\TELEBLASTER PRO\bin\Debug\net8.0-windows7.0\drivers\GoogleChromePortable\Data\profile\Default\Session Storage/MANIFEST-000001
+2024/10/09-06:15:22.009 ddc Recovering log #22
+2024/10/09-06:15:22.012 ddc Level-0 table #25: started
+2024/10/09-06:15:22.037 ddc Level-0 table #25: 20274 bytes OK
+2024/10/09-06:15:22.058 ddc Recovering log #25
+2024/10/09-06:15:22.070 ddc Reusing old log D:\PKL\New folder\TELEBLASTER PRO\TELEBLASTER PRO\bin\Debug\net8.0-windows7.0\drivers\GoogleChromePortable\Data\profile\Default\Session Storage/000025.log 
+2024/10/09-06:15:22.078 ddc Delete type=0 #22
+2024/10/09-06:15:22.078 ddc Delete type=2 #26
+2024/10/09-06:15:22.085 4fc8 Compacting 4@0 + 1@1 files
+2024/10/09-06:15:22.201 4fc8 Generated table #26@0: 26 keys, 2389 bytes
+2024/10/09-06:15:22.201 4fc8 Compacted 4@0 + 1@1 files => 2389 bytes
+2024/10/09-06:15:22.203 4fc8 compacted to: files[ 0 1 0 0 0 0 0 ]
+2024/10/09-06:15:22.206 4fc8 Delete type=2 #14
+2024/10/09-06:15:22.207 4fc8 Delete type=2 #16
+2024/10/09-06:15:22.207 4fc8 Delete type=2 #20
+2024/10/09-06:15:22.207 4fc8 Delete type=2 #23
+2024/10/09-06:15:22.207 4fc8 Delete type=2 #25
