@@ -25,21 +25,34 @@ namespace TELEBLASTER_PRO.Controls
             InitializeComponent();
         }
 
+        public static readonly DependencyProperty ValueProperty =
+            DependencyProperty.Register("Value", typeof(int), typeof(NumericUpDownControl),
+                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnValueChanged));
+
+        public int Value
+        {
+            get => (int)GetValue(ValueProperty);
+            set => SetValue(ValueProperty, value);
+        }
+
+        private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (NumericUpDownControl)d;
+            control.numericTextBox.Text = e.NewValue.ToString();
+        }
+
         // Event handler untuk tombol "Up"
         private void UpButton_Click(object sender, RoutedEventArgs e)
         {
-            if (int.TryParse(numericTextBox.Text, out int value))
-            {
-                numericTextBox.Text = (value + 1).ToString();
-            }
+            Value++;
         }
 
         // Event handler untuk tombol "Down"
         private void DownButton_Click(object sender, RoutedEventArgs e)
         {
-            if (int.TryParse(numericTextBox.Text, out int value) && value > 0)
+            if (Value > 0)
             {
-                numericTextBox.Text = (value - 1).ToString();
+                Value--;
             }
         }
     }

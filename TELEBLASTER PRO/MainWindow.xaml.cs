@@ -51,19 +51,6 @@ namespace TELEBLASTER_PRO
             }
         }
 
-        private async void ExecutePythonCodeAsync()
-        {
-            await Task.Run(() =>
-            {
-                using (Py.GIL())
-                {
-                    // Contoh kode Python yang dieksekusi
-                    dynamic py = Py.Import("some_python_module");
-                    py.some_function();
-                }
-            });
-        }
-
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (this.WindowState == WindowState.Maximized || this.Width >= 1033)

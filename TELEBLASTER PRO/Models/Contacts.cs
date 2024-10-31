@@ -16,6 +16,7 @@ namespace TELEBLASTER_PRO.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string UserName { get; set; }
+        public bool IsChecked { get; set; }
 
         public static List<Contacts> LoadContacts(SQLiteConnection connection)
         {
@@ -36,7 +37,8 @@ namespace TELEBLASTER_PRO.Models
                             AccessHash = reader.GetString(3),
                             FirstName = reader.GetString(4),
                             LastName = reader.GetString(5),
-                            UserName = reader.GetString(6)
+                            UserName = reader.GetString(6),
+                            IsChecked = false
                         });
                     }
                 }

@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Python.Runtime;
+using TELEBLASTER_PRO.ViewModels;
 
 namespace TELEBLASTER_PRO.Views.UserControls
 {
@@ -25,37 +26,7 @@ namespace TELEBLASTER_PRO.Views.UserControls
         public SendMessage()
         {
             InitializeComponent();
-        }
-
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
-
-        private void Test_Click(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("Emoji Picker button clicked");
-        }
-        
-        private void ExtractContactsButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                using (Py.GIL())
-                {
-                    dynamic py = Py.Import("functions");
-                    var result = py.extract_contacts_to_csv("user1.session", "contacts.csv");
-                    bool success = result[0];
-                    string message = result[1];
-
-                    MessageBox.Show(message, success ? "Success" : "Error");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error");
-            }
+            DataContext = new SendMessageViewModel(new AccountViewModel());
         }
     }
 }

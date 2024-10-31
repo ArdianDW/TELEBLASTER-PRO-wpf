@@ -34,14 +34,14 @@
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="15,15,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Enter name prefix" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
-                        <TextBox Width="150" Height="25" Margin="5,0,0,0" VerticalContentAlignment="Center"/>
+                        <TextBox Width="150" Height="25" Margin="5,0,0,0" VerticalContentAlignment="Center" Text="{Binding PrefixName, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Text="Enter number prefix (region code)" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold" Margin="10,0,0,0"/>
-                        <TextBox Width="200" Height="25" Margin="5,0,0,0" VerticalContentAlignment="Center"/>
+                        <TextBox Width="200" Height="25" Margin="5,0,0,0" VerticalContentAlignment="Center" Text="{Binding NumberPrefix, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="15,15,0,15">
                         <TextBlock Text="Enter add value" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
-                        <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="60" Margin="5,0,0,0"/>
-                        <Button Content="Generate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
+                        <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="60" Margin="5,0,0,0" Value="{Binding AddValue, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Content="Generate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Command="{Binding GenerateCommand}"/>
                         <Button Content="Validate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
                     </StackPanel>
                 </Grid>
@@ -69,16 +69,17 @@
                         <Button Content="Clear" Width="60" Height="30" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}"/>
                     </StackPanel>
 
-                    <DataGrid x:Name="NumbersDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*" 
-                      BorderThickness="1,0,1,1" BorderBrush="LightBlue" Background="Transparent"
-                      AlternatingRowBackground="#d8ecfc" RowBackground="White" Grid.Row="3" RowHeight="35" Margin="15, 0, 15, 15" IsReadOnly="True"
-                      ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
-                      RowStyle="{StaticResource DataGridRowStyle}"
-                      CellStyle="{StaticResource DataGridCellStyle}"
-                      ItemsSource="{Binding YourDataSource}">
+                    <DataGrid x:Name="NumbersDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*"
+                              BorderThickness="1,0,1,1" BorderBrush="LightBlue" Background="Transparent"
+                              AlternatingRowBackground="#d8ecfc" RowBackground="White" Grid.Row="3" RowHeight="35" Margin="15, 0, 15, 15" IsReadOnly="True"
+                              ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
+                              RowStyle="{StaticResource DataGridRowStyle}"
+                              CellStyle="{StaticResource DataGridCellStyle}"
+                              ItemsSource="{Binding GeneratedNumbers}"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Name" Width="*"/>
-                            <DataGridTextColumn Header="Phone Number" Width="*"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding PrefixName}" Width="*"/>
+                            <DataGridTextColumn Header="Phone Number" Binding="{Binding PhoneNumber}" Width="Auto"/>
                             <DataGridTextColumn Header="Username" Width="*"/>
                             <DataGridTextColumn Header="User ID" Width="*"/>
                             <DataGridTextColumn Header="Access Hash" Width="*"/>
@@ -94,7 +95,7 @@
                         Grid.Row="3">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="{Binding ElementName=MembersDataGrid, Path=Items.Count, Converter={StaticResource ItemsCountToVisibilityConverter}}"/>
+                                <Setter Property="Visibility" Value="{Binding ElementName=NumbersDataGrid, Path=Items.Count, Converter={StaticResource ItemsCountToVisibilityConverter}}"/>
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>

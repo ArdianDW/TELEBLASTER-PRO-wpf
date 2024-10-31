@@ -48,8 +48,9 @@
                                     <ColumnDefinition Width="8*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                    <Button Content="Emoji Picker" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="15, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top" Click="Test_Click"/>
-                                    <Button Content="Browse" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="0, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <Button Content="Emoji Picker" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="15, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <Button Content="Browse" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="0, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                            Command="{Binding BrowseFileCommand}"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -60,7 +61,8 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="CustomTextBox" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="15,0,15,10" Grid.Column="0"
-                                         AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto">
+                                         AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                         Text="{Binding CustomTextBoxText, UpdateSourceTrigger=PropertyChanged}">
                                     <TextBox.Style>
                                         <Style TargetType="TextBox">
                                             <Setter Property="Template">
@@ -95,12 +97,9 @@
                                     <StackPanel Orientation="Horizontal" Grid.Row="0" Width="Auto">
                                         <TextBlock Margin="0,0,0,0" Height="Auto" Width="Auto" Padding="0, 9, 0, 0" FontWeight="SemiBold">Select number</TextBlock>
 
-                                        <ComboBox Style="{StaticResource ComboBoxStyle}" Margin="5, 5, 50, 5" SelectionChanged="ComboBox_SelectionChanged" Width="200">
-                                            <ComboBoxItem>6285732923521</ComboBoxItem>
-                                            <ComboBoxItem>6285855973935</ComboBoxItem>
-                                            <ComboBoxItem>6285855973935</ComboBoxItem>
-                                            <ComboBoxItem>6285855973935</ComboBoxItem>
-                                            <ComboBoxItem>6285855973935</ComboBoxItem>
+                                        <ComboBox Style="{StaticResource ComboBoxStyle}" Margin="5, 5, 50, 5" Width="200"
+                                              ItemsSource="{Binding ActivePhoneNumbers}"
+                                              SelectedItem="{Binding SelectedPhoneNumber, UpdateSourceTrigger=PropertyChanged}">
                                         </ComboBox>
                                     </StackPanel>
                                     <Grid Grid.Row="1">
@@ -120,7 +119,8 @@
                                         <Label Content="━" VerticalContentAlignment="Center"/>
                                         <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35"/>
                                         <TextBlock Text="Delay per message" Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                        <Button Content="Send" Width="100" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" HorizontalAlignment="Right"/>
+                                        <Button Content="Send" Width="100" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" HorizontalAlignment="Right"
+                                                Command="{Binding SendMessageCommand}"/>
                                     </StackPanel>
                                 </Grid>
                             </Grid>
@@ -155,7 +155,8 @@
                                 <ColumnDefinition Width="4*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Left" Margin="15,0,0,0">
-                                <Button Content="Extract Contacts" Width="75" Height="20" Margin="0,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Click="ExtractContactsButton_Click"/>
+                                <Button Content="Extract Contacts" Width="75" Height="20" Margin="0,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
+                                        Command="{Binding ExtractContactsCommand}"/>
                                 <Button Content="Extract Chats" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
                                 <Button Content="Import Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
                                 <Button Content="Export Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
@@ -176,7 +177,7 @@
                               ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                               RowStyle="{StaticResource DataGridRowStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
-                              ItemsSource="{Binding YourDataSource}">
+                              ItemsSource="{Binding ContactsList}">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Width="*">
                                     <DataGridTemplateColumn.Header>
@@ -191,12 +192,12 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="No" Width="40"/>
-                                <DataGridTextColumn Header="User ID" Width="*"/>
-                                <DataGridTextColumn Header="Access Hash" Width="*"/>
-                                <DataGridTextColumn Header="First Name" Width="*"/>
-                                <DataGridTextColumn Header="Last Name" Width="*"/>
-                                <DataGridTextColumn Header="Username" Width="*"/>
+                                <DataGridTextColumn Header="No" Width="40" Binding="{Binding Id}"/>
+                                <DataGridTextColumn Header="User ID" Width="*" Binding="{Binding ContactId}"/>
+                                <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}"/>
+                                <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}"/>
+                                <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}"/>
+                                <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}"/>
                                 <DataGridTextColumn Header="Status" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>

@@ -13,7 +13,7 @@
 
         <!-- TextBox untuk input angka -->
         <TextBox x:Name="numericTextBox"
-                 Text="0"
+                 Text="{Binding Value, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
                  VerticalAlignment="Center"
                  HorizontalContentAlignment="Right"
                  Width="Auto"

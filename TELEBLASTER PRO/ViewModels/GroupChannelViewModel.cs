@@ -9,6 +9,7 @@ using Python.Runtime;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
+using System.Data.SQLite;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -292,7 +293,6 @@ namespace TELEBLASTER_PRO.ViewModels
 
                 System.Diagnostics.Debug.WriteLine($"Extracting members from group: {SelectedGroup.GroupName} (ID: {SelectedGroup.GroupId}) using session: {sessionName}");
 
-                // Convert GroupId to long
                 if (!long.TryParse(SelectedGroup.GroupId, out long groupId))
                 {
                     System.Diagnostics.Debug.WriteLine("Error: GroupId is not a valid long.");
@@ -312,13 +312,13 @@ namespace TELEBLASTER_PRO.ViewModels
                                 dynamic py = Py.Import("functions");
                                 py.extract_members_sync(sessionName, groupId, SelectedGroup.GroupName, new Action<string>(UpdateExtractStatus));
                             }
-                            return LoadExtractedMembers(); // Assume this function loads extracted members from the database
+                            return LoadExtractedMembers();
                         });
 
                         if (extractedMembers != null)
                         {
                             System.Diagnostics.Debug.WriteLine("Member extraction completed.");
-                            break; // Exit loop if extraction is successful
+                            break;
                         }
                     }
                     catch (PythonException pe)
@@ -378,8 +378,11 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private List<GroupMembers> LoadExtractedMembers()
         {
-            // Implement this method to load extracted members from the database
-            return new List<GroupMembers>();
+            using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
+            {
+                connection.Open();
+                return GroupMembers.LoadGroupMembers(connection);
+            }
         }
 
         private void UpdateExtractStatus(string status)

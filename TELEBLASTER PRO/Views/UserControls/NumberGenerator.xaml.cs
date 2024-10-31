@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using TELEBLASTER_PRO.ViewModels;
 
 namespace TELEBLASTER_PRO.Views.UserControls
 {
@@ -23,6 +24,7 @@ namespace TELEBLASTER_PRO.Views.UserControls
         public NumberGenerator()
         {
             InitializeComponent();
+            DataContext = new NumberGeneratorViewModel();
         }
     }
 }

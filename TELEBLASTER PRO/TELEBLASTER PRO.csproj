@@ -31,6 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Costura.Fody" Version="5.7.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="pythonnet" Version="3.0.4" />
     <PackageReference Include="SQLite" Version="3.13.0" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
@@ -58,6 +62,9 @@
     </None>
     <None Update="Backend\teleblaster.db">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Drivers\chromedriver.exe">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="PythonScripts\addAccount.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

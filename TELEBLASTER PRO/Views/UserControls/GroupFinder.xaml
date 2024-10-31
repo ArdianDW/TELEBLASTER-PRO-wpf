@@ -36,16 +36,19 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="15,0,0,0">
                         <TextBlock Text="Enter keyword" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"/>
-                        <TextBox Width="190" Height="20" Margin="5,0,0,0"/>
+                        <TextBox Width="190" Height="20" Margin="5,0,0,0" Text="{Binding Keyword, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="5,0,0,0">
                         <TextBlock Text="Number of page" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"/>
-                        <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35" Margin="5,0,0,0"/>
+                        <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35" Margin="5,0,0,0" Value="{Binding Pages, UpdateSourceTrigger=PropertyChanged, FallbackValue=1}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Grid.Column="2">
-                        <CheckBox VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14">Show browser</CheckBox>
-                        <Button Content="Start" Width="70" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}"/>
-                        <Button Content="Filter Links" Width="80" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}"/>
+                        <CheckBox VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14" 
+                                  IsChecked="{Binding IsHeadless, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            Show browser
+                        </CheckBox>
+                        <Button Content="Start" Width="70" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" Command="{Binding StartCommand}"/>
+                        <Button Content="Filter Links" Width="80" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" Command="{Binding FilterLinksCommand}"/>
                     </StackPanel>
                 </Grid>
                 <Grid Grid.Row="3" Margin="0,5,0,0">
@@ -76,33 +79,33 @@
                         <Button Content="Select" Width="60" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}"/>
                     </StackPanel>
                     <Grid Grid.Row="3">
-                        <DataGrid x:Name="LinksDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*" 
-                          BorderThickness="1" BorderBrush="LightBlue" Background="Transparent"
-                          AlternatingRowBackground="#d8ecfc" RowBackground="White" Grid.Row="2" RowHeight="35" Margin="15, 0, 15, 15" IsReadOnly="True"
-                          ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
-                          RowStyle="{StaticResource DataGridRowStyle}"
-                          CellStyle="{StaticResource DataGridCellStyle}"
-                          ItemsSource="{Binding YourDataSource}">
+                        <DataGrid x:Name="LinksDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*"
+                                  BorderThickness="1" BorderBrush="LightBlue" Background="Transparent"
+                                  AlternatingRowBackground="#d8ecfc" RowBackground="White" Grid.Row="2" RowHeight="35" Margin="15, 0, 15, 15" IsReadOnly="True"
+                                  ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
+                                  RowStyle="{StaticResource DataGridRowStyle}"
+                                  CellStyle="{StaticResource DataGridCellStyle}"
+                                  ItemsSource="{Binding GroupLinks}">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Width="*">
                                     <DataGridTemplateColumn.Header>
                                         <StackPanel Orientation="Horizontal">
-                                            <CheckBox x:Name="CheckAll" VerticalAlignment="Center"/>
+                                            <CheckBox x:Name="CheckAll" VerticalAlignment="Center" IsChecked="{Binding IsCheckedAll, Mode=TwoWay}"/>
                                             <TextBlock Text="Select All" VerticalAlignment="Center" Margin="5,0,0,0"/>
                                         </StackPanel>
                                     </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <CheckBox IsChecked="{Binding IsChecked}" />
+                                            <CheckBox IsChecked="{Binding Check, Mode=TwoWay}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTextColumn Header="Link" Width="*"/>
-                                <DataGridTextColumn Header="Type" Width="*"/>
-                                <DataGridTextColumn Header="Group Name" Width="*"/>
-                                <DataGridTextColumn Header="Total Member" Width="*"/>
-                                <DataGridTextColumn Header="Status" Width="*"/>
+                                <DataGridTextColumn Header="Link" Binding="{Binding Link}" Width="*"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="*"/>
+                                <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="*"/>
+                                <DataGridTextColumn Header="Total Member" Binding="{Binding TotalMember}" Width="*"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
 
