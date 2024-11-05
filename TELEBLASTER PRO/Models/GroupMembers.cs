@@ -18,13 +18,14 @@ namespace TELEBLASTER_PRO.Models
         public string LastName { get; set; }
         public string UserName { get; set; }
 
-        public static List<GroupMembers> LoadGroupMembers(SQLiteConnection connection)
+        public static List<GroupMembers> LoadGroupMembers(SQLiteConnection connection, long groupId)
         {
             var groupMembers = new List<GroupMembers>();
-            string query = "SELECT id, group_id, user_id, member_id, access_hash, first_name, last_name, username FROM group_members";
+            string query = "SELECT id, group_id, user_id, member_id, access_hash, first_name, last_name, username FROM group_members WHERE group_id = @GroupId";
             
             using (var command = new SQLiteCommand(query, connection))
             {
+                command.Parameters.AddWithValue("@GroupId", groupId);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())

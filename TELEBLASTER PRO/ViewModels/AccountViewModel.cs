@@ -204,7 +204,7 @@ namespace TELEBLASTER_PRO.ViewModels
             return !IsRefreshing; // Allow refresh only if not already refreshing
         }
 
-        public IEnumerable<Account> GetActiveAccounts()
+            public IEnumerable<Account> GetActiveAccounts()
         {
             // Filter akun yang statusnya "Active"
             return Accounts.Where(account => account.Status == "Active");

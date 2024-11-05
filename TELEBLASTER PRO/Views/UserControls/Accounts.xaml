@@ -57,11 +57,11 @@
                           CellStyle="{StaticResource DataGridCellStyle}"
                           HorizontalScrollBarVisibility="Disabled">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="User ID" Binding="{Binding TelegramUserId}" Width="*"/>
-                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="*"/>
-                        <DataGridTextColumn Header="Real Name" Binding="{Binding Realname}" Width="*"/>
-                        <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*"/>
-                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                        <DataGridTextColumn Header="User ID" Binding="{Binding TelegramUserId}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Real Name" Binding="{Binding Realname}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTemplateColumn Header="Login" Width="*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>

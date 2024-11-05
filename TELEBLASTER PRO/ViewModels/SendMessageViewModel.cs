@@ -5,10 +5,12 @@ using System.ComponentModel;
 using System.Data.SQLite;
 using System.Linq;
 using System.Windows.Input;
-using Python.Runtime; // Add reference to PythonNet
+using Python.Runtime;
 using TELEBLASTER_PRO.Models;
 using System.Diagnostics;
-using Microsoft.Win32; // Tambahkan ini untuk OpenFileDialog
+using Microsoft.Win32;
+using System.Windows;
+using System.Threading.Tasks;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -75,7 +77,7 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             if (string.IsNullOrEmpty(SelectedPhoneNumber))
             {
-                // Handle case where no phone number is selected
+                MessageBox.Show("Please select a phone number.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -112,33 +114,33 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        private void SendMessage()
+        private async void SendMessage()
         {
             if (string.IsNullOrEmpty(SelectedPhoneNumber))
             {
-                // Handle case where no phone number is selected
+                MessageBox.Show("Please select a phone number.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
-            // Dapatkan sessionName dari SelectedPhoneNumber
-            string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
 
             var selectedContacts = ContactsList.Where(c => c.IsChecked).ToList();
             if (!selectedContacts.Any())
             {
-                // Handle case where no contacts are selected
+                MessageBox.Show("Please select at least one contact.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             string message = CustomTextBoxText; // Assume you bind the TextBox text to this property
 
+            // Get session_name from SelectedPhoneNumber
+            string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
+
             foreach (var contact in selectedContacts)
             {
-                SendMessageToContact(sessionName, contact, message);
+                await SendMessageToContactAsync(sessionName, contact, message);
             }
         }
 
-        private void SendMessageToContact(string sessionName, Contacts contact, string message)
+        private async Task SendMessageToContactAsync(string sessionName, Contacts contact, string message)
         {
             Debug.WriteLine($"Sending message with sessionName: {sessionName}, contact UserId: {contact.ContactId}, message: {message}, attachment: {AttachmentFilePath}");
 
@@ -148,7 +150,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     dynamic py = Py.Import("functions");
                     Debug.WriteLine("Python module 'functions' imported successfully.");
-                    py.send_message(sessionName, contact.ContactId, contact.AccessHash, message, AttachmentFilePath);
+                    await Task.Run(() => py.send_message(sessionName, contact.ContactId, message, AttachmentFilePath));
                     Debug.WriteLine("Python function 'send_message' executed successfully.");
                 }
                 catch (Exception ex)

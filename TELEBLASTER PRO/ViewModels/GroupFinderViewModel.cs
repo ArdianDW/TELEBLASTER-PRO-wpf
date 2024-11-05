@@ -4,7 +4,7 @@ using System.Windows.Input;
 using Python.Runtime;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
-using System.Data.SQLite; 
+using System.Data.SQLite;
 using TELEBLASTER_PRO.Models;
 
 namespace TELEBLASTER_PRO.ViewModels
@@ -19,13 +19,13 @@ namespace TELEBLASTER_PRO.ViewModels
 
         public string Keyword
         {
-            get => _keyword;
+            get => ExtractedDataStore.Instance.Keyword;
             set
             {
-                if (_keyword != value)
+                if (ExtractedDataStore.Instance.Keyword != value)
                 {
-                    _keyword = value;
-                    OnPropertyChanged();
+                    ExtractedDataStore.Instance.Keyword = value;
+                    OnPropertyChanged(nameof(Keyword));
                 }
             }
         }
@@ -89,8 +89,10 @@ namespace TELEBLASTER_PRO.ViewModels
         public GroupFinderViewModel()
         {
             StartCommand = new RelayCommand(StartAutomation);
-            GroupLinks = new ObservableCollection<GroupLinks>();
+            GroupLinks = ExtractedDataStore.Instance.GroupLinks;
             GroupLinks.CollectionChanged += GroupLinks_CollectionChanged;
+
+            Keyword = ExtractedDataStore.Instance.Keyword;
         }
 
         private void GroupLinks_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -111,6 +113,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private void StartAutomation(object parameter)
         {
+            dynamic driver = null;
             try
             {
                 Debug.WriteLine($"Starting automation with IsHeadless: {IsHeadless}");
@@ -123,7 +126,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
                     dynamic groupFinder = Py.Import("groupFinder");
                     Debug.WriteLine("Calling automate_group_finding function...");
-                    groupFinder.automate_group_finding(Keyword, Pages, IsHeadless);
+                    driver = groupFinder.automate_group_finding(Keyword, Pages, !IsHeadless);
                     Debug.WriteLine("Function call completed.");
                 }
 
@@ -135,6 +138,22 @@ namespace TELEBLASTER_PRO.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"An error occurred during automation: {ex.Message}");
+            }
+            finally
+            {
+                // Ensure the browser is closed
+                if (driver != null)
+                {
+                    try
+                    {
+                        driver.quit();
+                        Debug.WriteLine("Browser closed successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Failed to close browser: {ex.Message}");
+                    }
+                }
             }
         }
 

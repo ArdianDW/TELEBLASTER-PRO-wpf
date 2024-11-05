@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace TELEBLASTER_PRO.Models
 {
-    internal class GroupLinks : INotifyPropertyChanged
+    public class GroupLinks : INotifyPropertyChanged
     {
         private int _check;
         public int Id { get; set; }

@@ -192,12 +192,12 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="No" Width="40" Binding="{Binding Id}"/>
-                                <DataGridTextColumn Header="User ID" Width="*" Binding="{Binding ContactId}"/>
-                                <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}"/>
-                                <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}"/>
-                                <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}"/>
-                                <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}"/>
+                                <DataGridTextColumn Header="No" Width="40" Binding="{Binding Id}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="User ID" Width="*" Binding="{Binding ContactId}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Status" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>

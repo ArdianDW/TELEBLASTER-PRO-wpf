@@ -138,13 +138,13 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="No" Width="40"/>
-                        <DataGridTextColumn Header="User ID" Width="*"/>
-                        <DataGridTextColumn Header="Access Hash" Width="*"/>
-                        <DataGridTextColumn Header="First Name" Width="*"/>
-                        <DataGridTextColumn Header="Last Name" Width="*"/>
-                        <DataGridTextColumn Header="Username" Width="*"/>
-                        <DataGridTextColumn Header="Status" Width="*"/>
+                        <DataGridTextColumn Header="No" Width="40" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="User ID" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Access Hash" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="First Name" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Last Name" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Username" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Status" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <TextBlock Text="No data available"

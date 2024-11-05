@@ -10,27 +10,31 @@ namespace TELEBLASTER_PRO.ViewModels
 {
     internal class NumberGeneratorViewModel : INotifyPropertyChanged
     {
-        private string _prefixName;
-        private string _numberPrefix;
         private int _addValue;
 
         public string PrefixName
         {
-            get => _prefixName;
+            get => ExtractedDataStore.Instance.PrefixName;
             set
             {
-                _prefixName = value;
-                OnPropertyChanged();
+                if (ExtractedDataStore.Instance.PrefixName != value)
+                {
+                    ExtractedDataStore.Instance.PrefixName = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
         public string NumberPrefix
         {
-            get => _numberPrefix;
+            get => ExtractedDataStore.Instance.NumberPrefix;
             set
             {
-                _numberPrefix = value;
-                OnPropertyChanged();
+                if (ExtractedDataStore.Instance.NumberPrefix != value)
+                {
+                    ExtractedDataStore.Instance.NumberPrefix = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -44,13 +48,15 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        public ObservableCollection<NumberGenerated> GeneratedNumbers { get; set; }
+        public ObservableCollection<NumberGenerated> GeneratedNumbers
+        {
+            get => ExtractedDataStore.Instance.GeneratedNumbers;
+        }
 
         public ICommand GenerateCommand { get; }
 
         public NumberGeneratorViewModel()
         {
-            GeneratedNumbers = new ObservableCollection<NumberGenerated>();
             GenerateCommand = new RelayCommand(_ => GenerateNumbers());
         }
 

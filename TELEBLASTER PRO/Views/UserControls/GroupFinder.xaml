@@ -101,11 +101,11 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTextColumn Header="Link" Binding="{Binding Link}" Width="*"/>
-                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="*"/>
-                                <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="*"/>
-                                <DataGridTextColumn Header="Total Member" Binding="{Binding TotalMember}" Width="*"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                                <DataGridTextColumn Header="Link" Binding="{Binding Link}" Width="*" ElementStyle="{StaticResource CenteredLinkTextStyle}"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Total Member" Binding="{Binding TotalMember}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             </DataGrid.Columns>
                         </DataGrid>
 

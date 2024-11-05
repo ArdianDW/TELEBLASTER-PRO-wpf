@@ -111,12 +111,12 @@
                               CellStyle="{StaticResource DataGridCellStyle}"
                               ItemsSource="{Binding ExtractedMembers}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="No" Width="40" Binding="{Binding No}"/>
-                            <DataGridTextColumn Header="Member ID" Width="*" Binding="{Binding MemberId}"/>
-                            <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}"/>
-                            <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}"/>
-                            <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}"/>
-                            <DataGridTextColumn Header="Username" Width="*" Binding="{Binding Username}"/>
+                            <DataGridTextColumn Header="No" Width="40" Binding="{Binding No}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Member ID" Width="*" Binding="{Binding MemberId}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Username" Width="*" Binding="{Binding Username}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         </DataGrid.Columns>
                     </DataGrid>
 

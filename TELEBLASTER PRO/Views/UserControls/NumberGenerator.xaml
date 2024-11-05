@@ -78,12 +78,12 @@
                               ItemsSource="{Binding GeneratedNumbers}"
                               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Name" Binding="{Binding PrefixName}" Width="*"/>
-                            <DataGridTextColumn Header="Phone Number" Binding="{Binding PhoneNumber}" Width="Auto"/>
-                            <DataGridTextColumn Header="Username" Width="*"/>
-                            <DataGridTextColumn Header="User ID" Width="*"/>
-                            <DataGridTextColumn Header="Access Hash" Width="*"/>
-                            <DataGridTextColumn Header="Status" Width="*"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding PrefixName}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Phone Number" Binding="{Binding PhoneNumber}" Width="Auto" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Username" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="User ID" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Access Hash" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Status" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         </DataGrid.Columns>
                     </DataGrid>
 

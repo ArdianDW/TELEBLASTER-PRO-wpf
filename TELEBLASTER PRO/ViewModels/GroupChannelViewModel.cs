@@ -43,6 +43,7 @@ namespace TELEBLASTER_PRO.ViewModels
             set
             {
                 _selectedPhoneNumber = value;
+                ExtractedDataStore.Instance.SelectedPhoneNumber = value;
                 OnPropertyChanged(nameof(SelectedPhoneNumber));
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -86,6 +87,7 @@ namespace TELEBLASTER_PRO.ViewModels
             set
             {
                 _selectedGroup = value;
+                ExtractedDataStore.Instance.SelectedGroup = value;
                 OnPropertyChanged(nameof(SelectedGroup));
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -107,8 +109,11 @@ namespace TELEBLASTER_PRO.ViewModels
             ExtractMembersCommand = new RelayCommand(async _ => await StartExtractingMembersAsync(), CanExecuteExtractMembers);
             StopExtractionCommand = new RelayCommand(_ => StopExtraction(), CanExecuteStopExtraction);
             ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
-            LoadedGroups = new ObservableCollection<GroupInfo>();
-            ExtractedMembers = new ObservableCollection<GroupMember>();
+            LoadedGroups = ExtractedDataStore.Instance.LoadedGroups;
+            ExtractedMembers = ExtractedDataStore.Instance.ExtractedMembers;
+
+            SelectedPhoneNumber = ExtractedDataStore.Instance.SelectedPhoneNumber;
+            SelectedGroup = ExtractedDataStore.Instance.SelectedGroup;
 
             try
             {
@@ -312,7 +317,7 @@ namespace TELEBLASTER_PRO.ViewModels
                                 dynamic py = Py.Import("functions");
                                 py.extract_members_sync(sessionName, groupId, SelectedGroup.GroupName, new Action<string>(UpdateExtractStatus));
                             }
-                            return LoadExtractedMembers();
+                            return LoadExtractedMembers(groupId);
                         });
 
                         if (extractedMembers != null)
@@ -346,7 +351,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        ExtractedMembers.Clear();
+                        ExtractedDataStore.Instance.ExtractedMembers.Clear();
                         int no = 1; // Mulai dari 1
                         foreach (var member in extractedMembers)
                         {
@@ -357,7 +362,7 @@ namespace TELEBLASTER_PRO.ViewModels
                                 continue; // Skip this member if conversion fails
                             }
 
-                            ExtractedMembers.Add(new GroupMember
+                            ExtractedDataStore.Instance.ExtractedMembers.Add(new GroupMember
                             {
                                 No = no++, // Set nomor urut
                                 MemberId = memberId, // Use the converted long value
@@ -376,12 +381,12 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        private List<GroupMembers> LoadExtractedMembers()
+        private List<GroupMembers> LoadExtractedMembers(long groupId)
         {
             using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
             {
                 connection.Open();
-                return GroupMembers.LoadGroupMembers(connection);
+                return GroupMembers.LoadGroupMembers(connection, groupId);
             }
         }
 

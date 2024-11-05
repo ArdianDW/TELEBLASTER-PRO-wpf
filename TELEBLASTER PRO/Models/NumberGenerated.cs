@@ -3,7 +3,7 @@ using System.Data.SQLite; // Pastikan Anda memiliki referensi ke SQLite
 
 namespace TELEBLASTER_PRO.Models
 {
-    internal class NumberGenerated
+    public class NumberGenerated
     {
         public int Id { get; set; }
         public string PrefixName { get; set; }
