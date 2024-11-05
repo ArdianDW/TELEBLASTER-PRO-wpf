@@ -16,6 +16,14 @@ namespace TELEBLASTER_PRO.ViewModels
         private bool _isHeadless;
         private ObservableCollection<GroupLinks> _groupLinks;
         private bool _isCheckedAll;
+        private ObservableCollection<string> _activePhoneNumbers;
+        private int _minDelay = 4;
+        private int _maxDelay = 6;
+        private string _selectedPhoneNumber;
+        private string _groupName;
+        private int _totalMember;
+        private string _status;
+        private bool _isJoinAllNumbers;
 
         public string Keyword
         {
@@ -84,15 +92,133 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        public ObservableCollection<string> ActivePhoneNumbers
+        {
+            get => _activePhoneNumbers;
+            private set
+            {
+                if (_activePhoneNumbers != value)
+                {
+                    _activePhoneNumbers = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public int MinDelay
+        {
+            get => _minDelay;
+            set
+            {
+                if (_minDelay != value)
+                {
+                    _minDelay = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public int MaxDelay
+        {
+            get => _maxDelay;
+            set
+            {
+                if (_maxDelay != value)
+                {
+                    _maxDelay = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string SelectedPhoneNumber
+        {
+            get => _selectedPhoneNumber;
+            set
+            {
+                if (_selectedPhoneNumber != value)
+                {
+                    _selectedPhoneNumber = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        
+        public string GroupName
+        {
+            get => _groupName;
+            set
+            {
+                if (_groupName != value)
+                {
+                    _groupName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public int TotalMember
+        {
+            get => _totalMember;
+            set
+            {
+                if (_totalMember != value)
+                {
+                    _totalMember = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string Status
+        {
+            get => _status;
+            set
+            {
+                if (_status != value)
+                {
+                    _status = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsJoinAllNumbers
+        {
+            get => _isJoinAllNumbers;
+            set
+            {
+                if (_isJoinAllNumbers != value)
+                {
+                    _isJoinAllNumbers = value;
+                    Debug.WriteLine($"IsJoinAllNumbers changed to: {_isJoinAllNumbers}");
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public ICommand StartCommand { get; }
+        public ICommand FilterLinksCommand { get; }
+        public ICommand JoinGroupsCommand { get; }
 
         public GroupFinderViewModel()
         {
+            Debug.WriteLine("GroupFinderViewModel initialized.");
             StartCommand = new RelayCommand(StartAutomation);
+            FilterLinksCommand = new RelayCommand(async _ => await FilterLinksAsync());
+            JoinGroupsCommand = new RelayCommand(async _ => await JoinSelectedGroupsAsync());
             GroupLinks = ExtractedDataStore.Instance.GroupLinks;
             GroupLinks.CollectionChanged += GroupLinks_CollectionChanged;
 
             Keyword = ExtractedDataStore.Instance.Keyword;
+
+            // Initialize ActivePhoneNumbers
+            ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
+        }
+
+        private IEnumerable<Account> GetActiveAccounts()
+        {
+            return Account.GetAccountsFromDatabase().Where(account => account.Status == "Active");
         }
 
         private void GroupLinks_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -182,21 +308,68 @@ namespace TELEBLASTER_PRO.ViewModels
         private async Task FilterLinksAsync()
         {
             Debug.WriteLine("FilterLinksAsync started.");
+
+            // Ambil sesi aktif dari database
+            var activeSessions = Account.GetAccountsFromDatabase()
+                                        .Where(account => account.Status == "Active")
+                                        .Select(account => account.SessionName)
+                                        .ToList();
+
+            if (activeSessions.Count == 0)
+            {
+                Debug.WriteLine("No active sessions found.");
+                return;
+            }
+
+            int sessionIndex = 0;
+            int linksPerUser = 5;
+
             try
             {
                 using (Py.GIL())
                 {
                     dynamic py = Py.Import("functions");
 
-                    foreach (var link in GroupLinks.Where(gl => gl.Check == 1))
+                    for (int i = 0; i < GroupLinks.Count; i++)
                     {
-                        Debug.WriteLine($"Processing link: {link.Link}");
-                        string groupType = py.get_group_type("user1.session", link.Link);
-                        Debug.WriteLine($"Link: {link.Link}, Group Type: {groupType}");
-
-                        if (groupType == "supergroup" || groupType == "channel" || groupType == "group")
+                        var link = GroupLinks[i];
+                        if (link.Check == 1)
                         {
-                            link.Type = groupType;
+                            string session = activeSessions[sessionIndex];
+                            Debug.WriteLine($"Processing link: {link.Link} with session: {session}");
+                            
+                            // Panggil fungsi Python untuk mendapatkan tipe grup
+                            string groupType = py.get_group_type(session, link.Link);
+                            Debug.WriteLine($"Link: {link.Link}, Group Type: {groupType}");
+
+                            // Perbarui tipe grup di model dan database
+                            if (groupType == "supergroup" || groupType == "channel" || groupType == "group" || groupType == "invalid link or not a group/channel" || groupType == "invite link expired")
+                            {
+                                link.Type = groupType == "invalid link or not a group/channel" ? "invalid" : groupType;
+                                if (groupType == "invite link expired")
+                                {
+                                    link.Type = "expired";
+                                }
+
+                                // Update database with new type
+                                using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
+                                {
+                                    connection.Open();
+                                    link.UpdateCheckStatusInDatabase(connection);
+                                }
+
+                                // Panggil OnPropertyChanged untuk memperbarui UI
+                                link.OnPropertyChanged(nameof(link.Type));
+                            }
+
+                            // Update UI
+                            OnPropertyChanged(nameof(GroupLinks));
+
+                            // Switch session after processing a set number of links
+                            if ((i + 1) % linksPerUser == 0)
+                            {
+                                sessionIndex = (sessionIndex + 1) % activeSessions.Count;
+                            }
                         }
                     }
                 }
@@ -206,6 +379,122 @@ namespace TELEBLASTER_PRO.ViewModels
                 Debug.WriteLine($"An error occurred during filtering: {ex.Message}");
             }
             Debug.WriteLine("FilterLinksAsync completed.");
+        }
+
+        private void SaveCheckedLinksToDatabase()
+        {
+            using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
+            {
+                connection.Open();
+                foreach (var link in GroupLinks)
+                {
+                    if (link.Check == 1) // Hanya simpan yang dicentang
+                    {
+                        link.UpdateCheckStatusInDatabase(connection);
+                    }
+                }
+            }
+        }
+
+        private async Task JoinSelectedGroupsAsync()
+        {
+            var random = new Random();
+            int minDelay = 5; // Default minimum delay
+            int maxDelay = 8; // Default maximum delay
+
+            if (MinDelay > 0) minDelay = MinDelay;
+            if (MaxDelay > 0) maxDelay = MaxDelay;
+
+            Debug.WriteLine("JoinSelectedGroupsAsync started.");
+
+            // Log status checkbox "Join all numbers"
+            Debug.WriteLine($"IsJoinAllNumbers is checked: {IsJoinAllNumbers}");
+
+            // Tentukan nomor yang akan digunakan berdasarkan status checkbox
+            var phoneNumbersToUse = IsJoinAllNumbers ? ActivePhoneNumbers : new ObservableCollection<string> { SelectedPhoneNumber };
+
+            // Debugging: Log daftar nomor yang akan digunakan
+            Debug.WriteLine("Phone numbers to use:");
+            foreach (var phoneNumber in phoneNumbersToUse)
+            {
+                Debug.WriteLine(phoneNumber);
+            }
+
+            foreach (var link in GroupLinks.Where(l => l.Check == 1))
+            {
+                foreach (var phoneNumber in phoneNumbersToUse)
+                {
+                    string sessionName = GetSessionNameFromPhoneNumber(phoneNumber);
+                    string groupLink = link.Link;
+
+                    Debug.WriteLine($"Attempting to join group: {groupLink} with session: {sessionName}");
+
+                    try
+                    {
+                        var (success, groupName, totalMember) = await JoinGroupAsync(sessionName, groupLink);
+
+                        if (success)
+                        {
+                            link.GroupName = groupName;
+                            link.TotalMember = totalMember ?? 0;
+                            link.Status = "Success";
+                            Debug.WriteLine($"Successfully joined group: {groupName} with {totalMember} members.");
+
+                            // Panggil OnPropertyChanged untuk setiap properti yang diubah
+                            link.OnPropertyChanged(nameof(link.GroupName));
+                            link.OnPropertyChanged(nameof(link.TotalMember));
+                            link.OnPropertyChanged(nameof(link.Status));
+                        }
+                        else
+                        {
+                            link.Status = "Failed";
+                            Debug.WriteLine($"Failed to join group: {groupLink}");
+                            link.OnPropertyChanged(nameof(link.Status));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Exception occurred while joining group: {ex.Message}");
+                        link.Status = "Failed";
+                        link.OnPropertyChanged(nameof(link.Status));
+                    }
+
+                    // Delay sebelum bergabung dengan grup berikutnya
+                    int delay = random.Next(minDelay, maxDelay) * 1000; // Convert to milliseconds
+                    Debug.WriteLine($"Waiting for {delay / 1000} seconds before next join.");
+                    await Task.Delay(delay);
+                }
+            }
+
+            Debug.WriteLine("JoinSelectedGroupsAsync completed.");
+
+            // Simpan perubahan ke database
+            SaveCheckedLinksToDatabase();
+        }
+
+        private async Task<(bool, string, int?)> JoinGroupAsync(string sessionName, string groupLink)
+        {
+            using (Py.GIL())
+            {
+                dynamic py = Py.Import("functions");
+                Debug.WriteLine($"Calling Python function join_group with session: {sessionName} and link: {groupLink}");
+                dynamic result = py.join_group(sessionName, groupLink);
+
+                // Ekstrak nilai dari PyObject
+                bool success = result[0].As<bool>();
+                string groupName = result[1].As<string>();
+                int? totalMember = result[2].IsNone() ? (int?)null : result[2].As<int>();
+
+                Debug.WriteLine($"Python function returned: success={success}, groupName={groupName}, totalMember={totalMember}");
+
+                return (success, groupName, totalMember);
+            }
+        }
+
+        private string GetSessionNameFromPhoneNumber(string phoneNumber)
+        {
+            var account = Account.GetAccountsFromDatabase().FirstOrDefault(a => a.Phone == phoneNumber);
+            return account?.SessionName;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

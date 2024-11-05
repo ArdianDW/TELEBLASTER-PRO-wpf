@@ -43,7 +43,7 @@ namespace TELEBLASTER_PRO.Models
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        public void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -78,7 +78,7 @@ namespace TELEBLASTER_PRO.Models
         // Method to update the Check status in the database
         public void UpdateCheckStatusInDatabase(SQLiteConnection connection)
         {
-            string query = "UPDATE group_links SET check = @check WHERE id = @id";
+            string query = "UPDATE group_links SET \"check\" = @check WHERE id = @id";
             using (var command = new SQLiteCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@check", Check);
