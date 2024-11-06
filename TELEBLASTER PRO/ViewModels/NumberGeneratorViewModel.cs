@@ -74,19 +74,16 @@ namespace TELEBLASTER_PRO.ViewModels
                     var newNumber = new NumberGenerated
                     {
                         PrefixName = $"{PrefixName}{i}",
-                        PhoneNumber = (baseNumber + i).ToString() // Tambahkan i ke baseNumber
+                        PhoneNumber = (baseNumber + i).ToString()
                     };
 
-                    // Simpan ke database
                     SaveNumberToDatabase(newNumber);
 
-                    // Tambahkan ke koleksi
                     GeneratedNumbers.Add(newNumber);
                 }
             }
             else
             {
-                // Tangani kasus di mana NumberPrefix tidak dapat diubah menjadi angka
                 throw new InvalidOperationException("NumberPrefix harus berupa angka.");
             }
         }
@@ -108,7 +105,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private async Task ValidateNumbersAsync()
         {
-            var activeAccounts = GetActiveAccounts().ToList(); // Dapatkan daftar akun aktif
+            var activeAccounts = GetActiveAccounts().ToList();
             int accountIndex = 0;
             int numbersPerAccount = 5;
             var random = new Random();
@@ -119,9 +116,8 @@ namespace TELEBLASTER_PRO.ViewModels
                 for (int i = 0; i < GeneratedNumbers.Count; i++)
                 {
                     var number = GeneratedNumbers[i];
-                    string currentSession = activeAccounts[accountIndex].SessionName; // Asumsikan setiap akun memiliki SessionName
+                    string currentSession = activeAccounts[accountIndex].SessionName; 
 
-                    // Logging sebelum validasi
                     Debug.WriteLine($"Validating phone number: {number.PhoneNumber} using session: {currentSession}");
 
                     var result = functions.validate_phone_number(currentSession, number.PhoneNumber);
@@ -134,24 +130,21 @@ namespace TELEBLASTER_PRO.ViewModels
                         number.Username = userInfo["username"].As<string>();
                         number.Status = "Valid";
 
-                        // Logging hasil validasi
                         Debug.WriteLine($"Phone number {number.PhoneNumber} is valid. User ID: {number.UserId}, Username: {number.Username}");
                     }
                     else
                     {
                         number.Status = "Not Valid";
 
-                        // Logging hasil validasi
                         Debug.WriteLine($"Phone number {number.PhoneNumber} is not valid.");
                     }
 
-                    // Perbarui properti individual
                     OnPropertyChanged(nameof(number.UserId));
                     OnPropertyChanged(nameof(number.AccessHash));
                     OnPropertyChanged(nameof(number.Username));
                     OnPropertyChanged(nameof(number.Status));
 
-                    int delay = random.Next(2, 3) * 1000; 
+                    int delay = random.Next(1, 2) * 1000; 
                     await Task.Delay(delay);
 
                     if ((i + 1) % numbersPerAccount == 0)

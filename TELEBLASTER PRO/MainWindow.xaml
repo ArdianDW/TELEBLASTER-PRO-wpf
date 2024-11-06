@@ -7,7 +7,8 @@
         xmlns:userControls="clr-namespace:TELEBLASTER_PRO.Views.UserControls"
         mc:Ignorable="d"
         Title="TELEBLASTER PRO" Height="600" Width="800" Background="#ededed"
-        MinWidth="800" MinHeight="600">
+        MinWidth="800" MinHeight="600"
+        Icon="Resources/Assets/Images/teleblaster-icon.ico">
 
     <Grid ClipToBounds="True">
         <Grid.ColumnDefinitions>

@@ -28,6 +28,7 @@
     <None Remove="Resources\Assets\Images\search.png" />
     <None Remove="Resources\Assets\Images\send-button.png" />
     <None Remove="Resources\Assets\Images\settings.png" />
+    <None Remove="Resources\Assets\Images\teleblaster-icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,6 +45,7 @@
     <Resource Include="Resources\Assets\Images\accounts.png" />
     <Resource Include="Resources\Assets\Images\community.png" />
     <Resource Include="Resources\Assets\Images\help-center.png" />
+    <Resource Include="Resources\Assets\Images\teleblaster-icon.ico" />
     <Resource Include="Resources\Assets\Images\invite.png" />
     <Resource Include="Resources\Assets\Images\logo-teleblaster.png" />
     <Resource Include="Resources\Assets\Images\logo-teleblaster.svg" />
