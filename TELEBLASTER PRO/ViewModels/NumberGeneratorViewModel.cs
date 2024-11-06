@@ -5,6 +5,8 @@ using System.Data.SQLite;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TELEBLASTER_PRO.Models;
+using Python.Runtime;
+using System.Diagnostics;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -54,28 +56,38 @@ namespace TELEBLASTER_PRO.ViewModels
         }
 
         public ICommand GenerateCommand { get; }
+        public ICommand ValidateCommand { get; }
 
         public NumberGeneratorViewModel()
         {
             GenerateCommand = new RelayCommand(_ => GenerateNumbers());
+            ValidateCommand = new RelayCommand(async _ => await ValidateNumbersAsync());
         }
 
         private void GenerateNumbers()
         {
             GeneratedNumbers.Clear();
-            for (int i = 1; i <= AddValue; i++)
+            if (long.TryParse(NumberPrefix, out long baseNumber))
             {
-                var newNumber = new NumberGenerated
+                for (int i = 1; i <= AddValue; i++)
                 {
-                    PrefixName = $"{PrefixName}{i}",
-                    PhoneNumber = $"{NumberPrefix}{i:D4}"
-                };
+                    var newNumber = new NumberGenerated
+                    {
+                        PrefixName = $"{PrefixName}{i}",
+                        PhoneNumber = (baseNumber + i).ToString() // Tambahkan i ke baseNumber
+                    };
 
-                // Simpan ke database
-                SaveNumberToDatabase(newNumber);
+                    // Simpan ke database
+                    SaveNumberToDatabase(newNumber);
 
-                // Tambahkan ke koleksi
-                GeneratedNumbers.Add(newNumber);
+                    // Tambahkan ke koleksi
+                    GeneratedNumbers.Add(newNumber);
+                }
+            }
+            else
+            {
+                // Tangani kasus di mana NumberPrefix tidak dapat diubah menjadi angka
+                throw new InvalidOperationException("NumberPrefix harus berupa angka.");
             }
         }
 
@@ -92,6 +104,69 @@ namespace TELEBLASTER_PRO.ViewModels
                     command.ExecuteNonQuery();
                 }
             }
+        }
+
+        private async Task ValidateNumbersAsync()
+        {
+            var activeAccounts = GetActiveAccounts().ToList(); // Dapatkan daftar akun aktif
+            int accountIndex = 0;
+            int numbersPerAccount = 5;
+            var random = new Random();
+
+            using (Py.GIL())
+            {
+                dynamic functions = Py.Import("functions");
+                for (int i = 0; i < GeneratedNumbers.Count; i++)
+                {
+                    var number = GeneratedNumbers[i];
+                    string currentSession = activeAccounts[accountIndex].SessionName; // Asumsikan setiap akun memiliki SessionName
+
+                    // Logging sebelum validasi
+                    Debug.WriteLine($"Validating phone number: {number.PhoneNumber} using session: {currentSession}");
+
+                    var result = functions.validate_phone_number(currentSession, number.PhoneNumber);
+                    bool isValid = result[0].As<bool>();
+                    if (isValid)
+                    {
+                        dynamic userInfo = result[1];
+                        number.UserId = userInfo["user_id"].As<long>().ToString();
+                        number.AccessHash = userInfo["access_hash"].As<long>().ToString();
+                        number.Username = userInfo["username"].As<string>();
+                        number.Status = "Valid";
+
+                        // Logging hasil validasi
+                        Debug.WriteLine($"Phone number {number.PhoneNumber} is valid. User ID: {number.UserId}, Username: {number.Username}");
+                    }
+                    else
+                    {
+                        number.Status = "Not Valid";
+
+                        // Logging hasil validasi
+                        Debug.WriteLine($"Phone number {number.PhoneNumber} is not valid.");
+                    }
+
+                    // Perbarui properti individual
+                    OnPropertyChanged(nameof(number.UserId));
+                    OnPropertyChanged(nameof(number.AccessHash));
+                    OnPropertyChanged(nameof(number.Username));
+                    OnPropertyChanged(nameof(number.Status));
+
+                    int delay = random.Next(2, 3) * 1000; 
+                    await Task.Delay(delay);
+
+                    if ((i + 1) % numbersPerAccount == 0)
+                    {
+                        accountIndex = (accountIndex + 1) % activeAccounts.Count;
+                    }
+                }
+            }
+
+            OnPropertyChanged(nameof(GeneratedNumbers));
+        }
+
+        private IEnumerable<Account> GetActiveAccounts()
+        {
+            return Account.GetAccountsFromDatabase().Where(account => account.Status == "Active");
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

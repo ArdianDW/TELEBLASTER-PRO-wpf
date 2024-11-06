@@ -42,7 +42,7 @@
                         <TextBlock Text="Enter add value" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
                         <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="60" Margin="5,0,0,0" Value="{Binding AddValue, UpdateSourceTrigger=PropertyChanged}"/>
                         <Button Content="Generate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Command="{Binding GenerateCommand}"/>
-                        <Button Content="Validate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
+                        <Button Content="Validate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Command="{Binding ValidateCommand}"/>
                     </StackPanel>
                 </Grid>
                 <Grid Grid.Row="3" x:Name="NumberGridView">
@@ -80,10 +80,10 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Name" Binding="{Binding PrefixName}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             <DataGridTextColumn Header="Phone Number" Binding="{Binding PhoneNumber}" Width="Auto" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                            <DataGridTextColumn Header="Username" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                            <DataGridTextColumn Header="User ID" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                            <DataGridTextColumn Header="Access Hash" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                            <DataGridTextColumn Header="Status" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="User ID" Binding="{Binding UserId}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Access Hash" Binding="{Binding AccessHash}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
