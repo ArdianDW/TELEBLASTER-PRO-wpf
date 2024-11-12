@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.Models
 {
@@ -12,11 +13,12 @@ namespace TELEBLASTER_PRO.Models
         public string GroupName { get; set; }
         public int TotalMember { get; set; }
 
-        public static List<JoinedGroups> LoadJoinedGroups(SQLiteConnection connection)
+        public static List<JoinedGroups> LoadJoinedGroups()
         {
             var joinedGroups = new List<JoinedGroups>();
             string query = "SELECT id, user_id, group_id, group_name, total_member FROM joined_groups";
             
+            var connection = DatabaseConnection.Instance;
             using (var command = new SQLiteCommand(query, connection))
             {
                 using (var reader = command.ExecuteReader())
@@ -37,13 +39,14 @@ namespace TELEBLASTER_PRO.Models
             return joinedGroups;
         }
 
-        public static void SaveOrUpdateGroup(SQLiteConnection connection, int userId, string groupId, string groupName, int totalMember)
+        public static void SaveOrUpdateGroup(int userId, string groupId, string groupName, int totalMember)
         {
             string query = "INSERT INTO joined_groups (user_id, group_id, group_name, total_member) " +
                            "VALUES (@userId, @groupId, @groupName, @totalMember) " +
                            "ON CONFLICT(user_id, group_id) DO UPDATE SET " +
                            "group_name = @groupName, total_member = @totalMember";
 
+            using (var connection = DatabaseConnection.Instance)
             using (var command = new SQLiteCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@userId", userId);

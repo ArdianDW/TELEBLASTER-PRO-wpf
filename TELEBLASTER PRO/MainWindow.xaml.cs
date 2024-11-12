@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿﻿using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -32,12 +32,12 @@ namespace TELEBLASTER_PRO
         {
             try
             {
-                string pythonPath = @"c:\Users\ardia\AppData\Local\Programs\Python\Python310";
-                string pythonDll = System.IO.Path.Combine(pythonPath, "python310.dll");
+                string pythonEmbeddedPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed");
+                string pythonDll = System.IO.Path.Combine(pythonEmbeddedPath, "python310.dll");
 
-                Environment.SetEnvironmentVariable("PYTHONHOME", pythonPath);
-                Environment.SetEnvironmentVariable("PYTHONPATH", pythonPath);
-
+                // Update the environment variables to use the embedded Python
+                Environment.SetEnvironmentVariable("PYTHONPATH", pythonEmbeddedPath);
+                
                 Python.Runtime.Runtime.PythonDLL = pythonDll;
 
                 PythonEngine.Initialize();

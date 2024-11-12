@@ -7,6 +7,7 @@ using System.Windows.Input;
 using TELEBLASTER_PRO.Models;
 using Python.Runtime;
 using System.Diagnostics;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -90,9 +91,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private void SaveNumberToDatabase(NumberGenerated number)
         {
-            using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
-            {
-                connection.Open();
+            var connection = DatabaseConnection.Instance;
                 string query = "INSERT INTO number_generated (prefix_name, phone_number) VALUES (@prefixName, @phoneNumber)";
                 using (var command = new SQLiteCommand(query, connection))
                 {
@@ -100,7 +99,6 @@ namespace TELEBLASTER_PRO.ViewModels
                     command.Parameters.AddWithValue("@phoneNumber", number.PhoneNumber);
                     command.ExecuteNonQuery();
                 }
-            }
         }
 
         private async Task ValidateNumbersAsync()
@@ -139,10 +137,13 @@ namespace TELEBLASTER_PRO.ViewModels
                         Debug.WriteLine($"Phone number {number.PhoneNumber} is not valid.");
                     }
 
-                    OnPropertyChanged(nameof(number.UserId));
-                    OnPropertyChanged(nameof(number.AccessHash));
-                    OnPropertyChanged(nameof(number.Username));
-                    OnPropertyChanged(nameof(number.Status));
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        OnPropertyChanged(nameof(number.UserId));
+                        OnPropertyChanged(nameof(number.AccessHash));
+                        OnPropertyChanged(nameof(number.Username));
+                        OnPropertyChanged(nameof(number.Status));
+                    });
 
                     int delay = random.Next(1, 2) * 1000; 
                     await Task.Delay(delay);
@@ -154,7 +155,10 @@ namespace TELEBLASTER_PRO.ViewModels
                 }
             }
 
-            OnPropertyChanged(nameof(GeneratedNumbers));
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                OnPropertyChanged(nameof(GeneratedNumbers));
+            });
         }
 
         private IEnumerable<Account> GetActiveAccounts()

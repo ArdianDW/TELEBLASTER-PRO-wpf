@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Data.SQLite; // Pastikan Anda memiliki referensi ke SQLite
+using System.Data.SQLite;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.Models
 {
@@ -15,13 +16,11 @@ namespace TELEBLASTER_PRO.Models
         public string Username { get; set; }
         public string Status { get; set; }
 
-        public static NumberGenerated LoadNumber(int id, string connectionString)
+        public static NumberGenerated LoadNumber(int id)
         {
             NumberGenerated numberGenerated = null;
 
-            using (var connection = new SQLiteConnection(connectionString))
-            {
-                connection.Open();
+            var connection = DatabaseConnection.Instance;
                 string query = "SELECT * FROM number_generated WHERE id = @id";
                 using (var command = new SQLiteCommand(query, connection))
                 {
@@ -46,7 +45,6 @@ namespace TELEBLASTER_PRO.Models
                         }
                     }
                 }
-            }
 
             return numberGenerated;
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.SQLite; 
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.Models
 {
@@ -18,11 +19,12 @@ namespace TELEBLASTER_PRO.Models
         public string UserName { get; set; }
         public bool IsChecked { get; set; }
 
-        public static List<Contacts> LoadContacts(SQLiteConnection connection)
+        public static List<Contacts> LoadContacts()
         {
             var contacts = new List<Contacts>();
             string query = "SELECT id, user_id, contact_id, access_hash, first_name, last_name, user_name FROM contacts";
-            
+
+            var connection = DatabaseConnection.Instance;
             using (var command = new SQLiteCommand(query, connection))
             {
                 using (var reader = command.ExecuteReader())

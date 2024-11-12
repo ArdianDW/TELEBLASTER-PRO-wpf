@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.Models
 {
@@ -28,10 +29,7 @@ namespace TELEBLASTER_PRO.Models
         public static List<Account> GetAccountsFromDatabase()
         {
             var accounts = new List<Account>();
-
-            using (var connection = new SQLiteConnection("Data Source=teleblaster.db;Version=3;"))
-            {
-                connection.Open();
+            var connection = DatabaseConnection.Instance;
                 var command = new SQLiteCommand("SELECT id, session_name, telegram_user_id, username, realname, phone_number, status FROM user_sessions", connection);
                 using (var reader = command.ExecuteReader())
                 {
@@ -48,21 +46,16 @@ namespace TELEBLASTER_PRO.Models
                         accounts.Add(new Account(id, sessionName, telegramUserId, username, realname, phone, status));
                     }
                 }
-            }
-
             return accounts;
         }
 
         public void UpdateStatusInDatabase()
         {
-            using (var connection = new SQLiteConnection("Data Source=teleblaster.db;Version=3;"))
-            {
-                connection.Open();
+            var connection = DatabaseConnection.Instance;
                 var command = new SQLiteCommand("UPDATE user_sessions SET status = @status WHERE id = @id", connection);
                 command.Parameters.AddWithValue("@status", Status == "Active" ? 1 : 0);
                 command.Parameters.AddWithValue("@id", Id);
                 command.ExecuteNonQuery();
-            }
         }
     }
 }

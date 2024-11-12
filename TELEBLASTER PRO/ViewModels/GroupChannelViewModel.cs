@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Data.SQLite;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -383,10 +384,9 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private List<GroupMembers> LoadExtractedMembers(long groupId)
         {
-            using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
+            var connection = DatabaseConnection.Instance;
             {
-                connection.Open();
-                return GroupMembers.LoadGroupMembers(connection, groupId);
+                return GroupMembers.LoadGroupMembers(groupId);
             }
         }
 

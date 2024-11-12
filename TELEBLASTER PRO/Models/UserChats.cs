@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.SQLite;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.Models
 {
@@ -17,11 +18,12 @@ namespace TELEBLASTER_PRO.Models
         public string LastName { get; set; }
         public string UserName { get; set; }
 
-        public static List<UserChats> LoadUserChats(SQLiteConnection connection)
+        public static List<UserChats> LoadUserChats()
         {
             var userChats = new List<UserChats>();
             string query = "SELECT id, user_id, chat_user_id, access_hash, first_name, last_name, username FROM user_chats";
             
+            var connection = DatabaseConnection.Instance;
             using (var command = new SQLiteCommand(query, connection))
             {
                 using (var reader = command.ExecuteReader())

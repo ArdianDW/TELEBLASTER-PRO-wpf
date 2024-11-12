@@ -11,6 +11,7 @@ using System.Diagnostics;
 using Microsoft.Win32;
 using System.Windows;
 using System.Threading.Tasks;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -103,15 +104,12 @@ namespace TELEBLASTER_PRO.ViewModels
         private void LoadContactsFromDatabase()
         {
             ContactsList.Clear();
-            using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
-            {
-                connection.Open();
-                var contacts = Contacts.LoadContacts(connection);
+            var connection = DatabaseConnection.Instance;
+                var contacts = Contacts.LoadContacts();
                 foreach (var contact in contacts)
                 {
                     ContactsList.Add(contact);
                 }
-            }
         }
 
         private async void SendMessage()

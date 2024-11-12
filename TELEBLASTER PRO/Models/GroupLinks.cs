@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.ComponentModel;
 using System.Diagnostics;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.Models
 {
@@ -48,11 +49,12 @@ namespace TELEBLASTER_PRO.Models
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public static List<GroupLinks> LoadGroupLinks(SQLiteConnection connection)
+        public static List<GroupLinks> LoadGroupLinks()
         {
             var groupLinks = new List<GroupLinks>();
             string query = "SELECT id, link, \"check\", group_name, total_member, type, status FROM group_links";
 
+            var connection = DatabaseConnection.Instance;
             using (var command = new SQLiteCommand(query, connection))
             {
                 using (var reader = command.ExecuteReader())
@@ -76,9 +78,10 @@ namespace TELEBLASTER_PRO.Models
         }
 
         // Method to update the Check status in the database
-        public void UpdateCheckStatusInDatabase(SQLiteConnection connection)
+        public void UpdateCheckStatusInDatabase()
         {
             string query = "UPDATE group_links SET \"check\" = @check WHERE id = @id";
+            var connection = DatabaseConnection.Instance;
             using (var command = new SQLiteCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@check", Check);

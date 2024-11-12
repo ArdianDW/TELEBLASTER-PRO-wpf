@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Data.SQLite;
 using TELEBLASTER_PRO.Models;
+using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -247,9 +248,6 @@ namespace TELEBLASTER_PRO.ViewModels
 
                 using (Py.GIL())
                 {
-                    dynamic sys = Py.Import("sys");
-                    sys.path.append("path_to_your_python_script_directory");
-
                     dynamic groupFinder = Py.Import("groupFinder");
                     Debug.WriteLine("Calling automate_group_finding function...");
                     driver = groupFinder.automate_group_finding(Keyword, Pages, !IsHeadless);
@@ -285,16 +283,13 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private void LoadGroupLinksFromDatabase()
         {
-            using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
-            {
-                connection.Open();
-                var links = TELEBLASTER_PRO.Models.GroupLinks.LoadGroupLinks(connection);
+            var connection = DatabaseConnection.Instance;
+                var links = TELEBLASTER_PRO.Models.GroupLinks.LoadGroupLinks();
                 GroupLinks.Clear();
                 foreach (var link in links)
                 {
                     GroupLinks.Add(link);
                 }
-            }
         }
 
         private void UpdateCheckAllItems(bool isChecked)
@@ -352,10 +347,9 @@ namespace TELEBLASTER_PRO.ViewModels
                                 }
 
                                 // Update database with new type
-                                using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
+                                var connection = DatabaseConnection.Instance;
                                 {
-                                    connection.Open();
-                                    link.UpdateCheckStatusInDatabase(connection);
+                                    link.UpdateCheckStatusInDatabase();
                                 }
 
                                 // Panggil OnPropertyChanged untuk memperbarui UI
@@ -383,17 +377,14 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private void SaveCheckedLinksToDatabase()
         {
-            using (var connection = new SQLiteConnection("Data Source=teleblaster.db"))
-            {
-                connection.Open();
+            var connection = DatabaseConnection.Instance;
                 foreach (var link in GroupLinks)
                 {
                     if (link.Check == 1) // Hanya simpan yang dicentang
                     {
-                        link.UpdateCheckStatusInDatabase(connection);
+                        link.UpdateCheckStatusInDatabase();
                     }
                 }
-            }
         }
 
         private async Task JoinSelectedGroupsAsync()

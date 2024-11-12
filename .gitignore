@@ -49,3 +49,4 @@ doc/
 
 # Direktori dan file di dalam folder `drivers` di dalam `TELEBLASTER PRO`
 TELEBLASTER PRO/drivers/
+TELEBLASTER PRO/python-embed/
