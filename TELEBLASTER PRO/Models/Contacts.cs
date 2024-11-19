@@ -8,7 +8,7 @@ using TELEBLASTER_PRO.Helpers;
 
 namespace TELEBLASTER_PRO.Models
 {
-    internal class Contacts
+    public class Contacts
     {
         public int Id { get; set; }
         public int UserId { get; set; }

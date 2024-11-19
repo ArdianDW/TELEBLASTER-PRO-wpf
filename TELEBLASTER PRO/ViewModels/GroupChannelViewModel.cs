@@ -11,6 +11,9 @@ using System.ComponentModel;
 using System.Windows;
 using System.Data.SQLite;
 using TELEBLASTER_PRO.Helpers;
+using ClosedXML.Excel;
+using Microsoft.Win32;
+
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -28,6 +31,7 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand LoadGroupsCommand { get; }
         public ICommand ExtractMembersCommand { get; }
         public ICommand StopExtractionCommand { get; }
+        public ICommand ExportMembersCommand { get; }
         public ObservableCollection<string> ActivePhoneNumbers { get; }
         public ObservableCollection<GroupInfo> LoadedGroups
         {
@@ -109,6 +113,7 @@ namespace TELEBLASTER_PRO.ViewModels
             LoadGroupsCommand = new RelayCommand(async _ => await StartLoadingGroupsAsync(), CanExecuteLoadGroups);
             ExtractMembersCommand = new RelayCommand(async _ => await StartExtractingMembersAsync(), CanExecuteExtractMembers);
             StopExtractionCommand = new RelayCommand(_ => StopExtraction(), CanExecuteStopExtraction);
+            ExportMembersCommand = new RelayCommand(_ => ExportMembers());
             ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
             LoadedGroups = ExtractedDataStore.Instance.LoadedGroups;
             ExtractedMembers = ExtractedDataStore.Instance.ExtractedMembers;
@@ -428,6 +433,59 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             var account = GetActiveAccounts().FirstOrDefault(a => a.Phone == phoneNumber);
             return account?.SessionName;
+        }
+
+        private void ExportMembers()
+        {
+            if (!ExtractedMembers.Any())
+            {
+                MessageBox.Show("No members available to export.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Excel Files|*.xlsx",
+                Title = "Save Members as Excel File"
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                string filePath = saveFileDialog.FileName;
+                try
+                {
+                    using (var workbook = new XLWorkbook())
+                    {
+                        var worksheet = workbook.Worksheets.Add("Members");
+                        worksheet.Cell(1, 1).Value = "No";
+                        worksheet.Cell(1, 2).Value = "User ID";
+                        worksheet.Cell(1, 3).Value = "Access Hash";
+                        worksheet.Cell(1, 4).Value = "First Name";
+                        worksheet.Cell(1, 5).Value = "Last Name";
+                        worksheet.Cell(1, 6).Value = "Username";
+
+                        int row = 2;
+                        foreach (var member in ExtractedMembers)
+                        {
+                            worksheet.Cell(row, 1).Value = member.No;
+                            worksheet.Cell(row, 2).Value = member.MemberId;
+                            worksheet.Cell(row, 3).Value = member.AccessHash;
+                            worksheet.Cell(row, 4).Value = member.FirstName;
+                            worksheet.Cell(row, 5).Value = member.LastName;
+                            worksheet.Cell(row, 6).Value = member.Username;
+                            row++;
+                        }
+
+                        workbook.SaveAs(filePath);
+                    }
+
+                    MessageBox.Show("Members exported successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error exporting members: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
     }
 

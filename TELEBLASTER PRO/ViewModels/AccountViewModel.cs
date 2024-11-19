@@ -131,36 +131,31 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             try
             {
+                string pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "python.exe");
+                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "addAccount.py");
+
+                Debug.WriteLine($"Python Path: {pythonPath}");
+                Debug.WriteLine($"Script Path: {scriptPath}");
+
                 ProcessStartInfo start = new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
-                    Arguments = $"/c title TELEBLASTER PRO & python addAccount.py",
-                    RedirectStandardOutput = false,
-                    UseShellExecute = true
+                    Arguments = $"/c \"\"{pythonPath}\" \"{scriptPath}\"\"",
+                    UseShellExecute = true,
+                    CreateNoWindow = false
                 };
 
                 using (Process process = Process.Start(start))
                 {
-                    using (StreamReader reader = process.StandardOutput)
-                    {
-                        string result = reader.ReadToEnd();
-                        Console.WriteLine(result);
-                    }
-                    using (StreamReader reader = process.StandardError)
-                    {
-                        string error = reader.ReadToEnd();
-                        if (!string.IsNullOrEmpty(error))
-                        {
-                            Console.WriteLine("Error: " + error);
-                        }
-                    }
+                    process.WaitForExit();
                 }
 
+                Debug.WriteLine("Finished executing addAccount.py");
                 RefreshAccounts(null);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("An error occurred while adding a new account: " + ex.Message);
+                Debug.WriteLine("An error occurred while adding a new account: " + ex.Message);
             }
         }
 
@@ -201,7 +196,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private bool CanExecuteRefresh(object parameter)
         {
-            return !IsRefreshing; // Allow refresh only if not already refreshing
+            return !IsRefreshing;
         }
 
             public IEnumerable<Account> GetActiveAccounts()

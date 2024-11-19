@@ -19,12 +19,15 @@ namespace TELEBLASTER_PRO.ViewModels
         public string NumberPrefix { get; set; }
         public ObservableCollection<NumberGenerated> GeneratedNumbers { get; private set; }
 
+        public ObservableCollection<Contacts> ContactsList { get; set; }
+
         private ExtractedDataStore()
         {
             GroupLinks = new ObservableCollection<GroupLinks>();
             ExtractedMembers = new ObservableCollection<GroupMember>();
             LoadedGroups = new ObservableCollection<GroupInfo>();
             GeneratedNumbers = new ObservableCollection<NumberGenerated>();
+            ContactsList = new ObservableCollection<Contacts>();
         }
     }
 }

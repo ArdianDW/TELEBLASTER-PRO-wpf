@@ -158,8 +158,10 @@
                                 <Button Content="Extract Contacts" Width="75" Height="20" Margin="0,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
                                         Command="{Binding ExtractContactsCommand}"/>
                                 <Button Content="Extract Chats" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
-                                <Button Content="Import Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
-                                <Button Content="Export Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
+                                <Button Content="Import Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
+                                        Command="{Binding ImportContactsCommand}"/>
+                                <Button Content="Export Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
+                                        Command="{Binding ExportContactsCommand}"/>
                                 <Button Content="Clear Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,15,0">

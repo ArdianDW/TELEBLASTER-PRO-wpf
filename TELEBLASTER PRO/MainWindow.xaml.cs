@@ -35,9 +35,9 @@ namespace TELEBLASTER_PRO
                 string pythonEmbeddedPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed");
                 string pythonDll = System.IO.Path.Combine(pythonEmbeddedPath, "python310.dll");
 
-                // Update the environment variables to use the embedded Python
-                Environment.SetEnvironmentVariable("PYTHONPATH", pythonEmbeddedPath);
-                
+                Environment.SetEnvironmentVariable("PYTHONHOME", pythonEmbeddedPath);
+                Environment.SetEnvironmentVariable("PYTHONPATH", System.IO.Path.Combine(pythonEmbeddedPath, "Lib"));
+
                 Python.Runtime.Runtime.PythonDLL = pythonDll;
 
                 PythonEngine.Initialize();
@@ -50,6 +50,7 @@ namespace TELEBLASTER_PRO
                 MessageBox.Show($"Gagal menginisialisasi Python: {ex.Message}");
             }
         }
+
 
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
