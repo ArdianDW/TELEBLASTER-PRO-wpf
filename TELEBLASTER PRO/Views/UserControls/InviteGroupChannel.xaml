@@ -8,9 +8,6 @@
              xmlns:converters="clr-namespace:TELEBLASTER_PRO.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="545" d:DesignWidth="800">
-    <UserControl.Resources>
-        <converters:StatusMultiConverter x:Key="StatusMultiConverter"/>
-    </UserControl.Resources>
     <Grid Background="Transparent" Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="170"/>
@@ -39,6 +36,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <StackPanel Orientation="Horizontal" Margin="15,0,0,5" VerticalAlignment="Center" Grid.Row="0">
                     <TextBlock Text="Your Group / Channel Link" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
@@ -47,19 +45,23 @@
                     <ComboBox Style="{StaticResource ComboBoxStyle}" Margin="5, 0, 0, 0" Height="25" Width="150"
                               ItemsSource="{Binding ActivePhoneNumbers}" SelectedItem="{Binding SelectedPhoneNumber, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Grid.Row="0">
-                    <CheckBox VerticalAlignment="Center" Margin="0,0,0,0" FontSize="14" FontWeight="SemiBold" IsChecked="{Binding SwitchNumberAutomatically, UpdateSourceTrigger=PropertyChanged}">Switch phone number automatically</CheckBox>
+                <StackPanel Orientation="Horizontal" Grid.Row="1">
+                    <CheckBox VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontWeight="SemiBold" IsChecked="{Binding SwitchNumberAutomatically, UpdateSourceTrigger=PropertyChanged}">Switch phone number automatically</CheckBox>
                     <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}"
                         HorizontalAlignment="Left" Height="20" Width="50" Margin="5,0,0,0" Value="{Binding MembersPerNumber, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock VerticalAlignment="Center" Margin="5, 0, 0, 0" FontWeight="SemiBold" FontSize="14">Members per number</TextBlock>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,15,0,0" Grid.Row="1">
-                    <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35" Value="{Binding MinDelay, UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,15,0,0" Grid.Row="2">
+                    <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35" Value="{Binding MinDelay, UpdateSourceTrigger=PropertyChanged}" Margin="15, 0,0,0"/>
                     <Label Content="━" VerticalContentAlignment="Center"/>
                     <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35" Value="{Binding MaxDelay, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock Text="Delay per invite" Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14"/>
                     <Button Content="Start Invite" Width="70" Height="30" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Command="{Binding StartInviteCommand}"/>
                     <Button Content="Stop Invite" Width="70" Height="30" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10" Command="{Binding StopInviteCommand}"/>
+                    <StackPanel Orientation="Horizontal" x:Name="InviteStatusBar" Visibility="{Binding IsInviting, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <controls:DonutSpinner Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                        <TextBlock Text="{Binding CurrentInviteStatus}" VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Grid>
@@ -121,7 +123,7 @@
                             </DataGridTemplateColumn.Header>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsChecked}" />
+                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -131,14 +133,7 @@
                         <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Status" Width="*">
-                            <DataGridTextColumn.Binding>
-                                <MultiBinding Converter="{StaticResource StatusMultiConverter}">
-                                    <Binding Path="ContactId"/>
-                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type UserControl}}" Path="DataContext"/>
-                                </MultiBinding>
-                            </DataGridTextColumn.Binding>
-                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Status" Width="*" Binding="{Binding Status}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <TextBlock Text="No data available"

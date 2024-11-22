@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Win32;
@@ -16,57 +16,12 @@ namespace TELEBLASTER_PRO.ViewModels
     class InviteGroupChannelViewModel : INotifyPropertyChanged
     {
         public ICommand ImportContactsCommand { get; }
+        public ICommand ExportContactsCommand { get; }
         public ICommand StartInviteCommand { get; }
         public ICommand StopInviteCommand { get; }
-        public ICommand ExportContactsCommand { get; }
 
         public ObservableCollection<Contacts> ContactsList => ExtractedDataStore.Instance.ContactsList;
-        public ObservableCollection<string> ActivePhoneNumbers { get; private set; }
-
-        private Dictionary<string, string> _inviteStatuses = new Dictionary<string, string>();
-        public Dictionary<string, string> InviteStatuses
-        {
-            get => _inviteStatuses;
-            set
-            {
-                _inviteStatuses = value;
-                OnPropertyChanged(nameof(InviteStatuses));
-            }
-        }
-
-        private int _minDelay;
-        public int MinDelay
-        {
-            get => _minDelay;
-            set
-            {
-                _minDelay = value;
-                OnPropertyChanged(nameof(MinDelay));
-            }
-        }
-
-        private int _maxDelay;
-        public int MaxDelay
-        {
-            get => _maxDelay;
-            set
-            {
-                _maxDelay = value;
-                OnPropertyChanged(nameof(MaxDelay));
-            }
-        }
-
-        private string _groupLink;
-        public string GroupLink
-        {
-            get => _groupLink;
-            set
-            {
-                _groupLink = value;
-                OnPropertyChanged(nameof(GroupLink));
-            }
-        }
-
+        public ObservableCollection<string> ActivePhoneNumbers { get; set; }
         private string _selectedPhoneNumber;
         public string SelectedPhoneNumber
         {
@@ -78,7 +33,29 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        private int _membersPerNumber;
+        private int _minDelay = 4;
+        public int MinDelay
+        {
+            get => _minDelay;
+            set
+            {
+                _minDelay = value;
+                OnPropertyChanged(nameof(MinDelay));
+            }
+        }
+
+        private int _maxDelay = 6;
+        public int MaxDelay
+        {
+            get => _maxDelay;
+            set
+            {
+                _maxDelay = value;
+                OnPropertyChanged(nameof(MaxDelay));
+            }
+        }
+
+        private int _membersPerNumber = 2;
         public int MembersPerNumber
         {
             get => _membersPerNumber;
@@ -88,6 +65,20 @@ namespace TELEBLASTER_PRO.ViewModels
                 OnPropertyChanged(nameof(MembersPerNumber));
             }
         }
+
+        private bool _isInviting;
+        public bool IsInviting
+        {
+            get => _isInviting;
+            set
+            {
+                _isInviting = value;
+                OnPropertyChanged(nameof(IsInviting));
+            }
+        }
+
+        public string GroupLink { get; set; }
+        public string CurrentInviteStatus { get; set; }
 
         private bool _switchNumberAutomatically;
         public bool SwitchNumberAutomatically
@@ -107,15 +98,12 @@ namespace TELEBLASTER_PRO.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private bool _isInviting;
-        private CancellationTokenSource _cancellationTokenSource;
-
         public InviteGroupChannelViewModel()
         {
             ImportContactsCommand = new RelayCommand(_ => ImportContacts());
-            StartInviteCommand = new RelayCommand(async _ => await StartInviteAsync(), _ => CanStartInvite());
-            StopInviteCommand = new RelayCommand(_ => StopInvite(), _ => CanStopInvite());
             ExportContactsCommand = new RelayCommand(_ => ExportContacts());
+            StartInviteCommand = new RelayCommand(_ => StartInvite(), _ => !IsInviting);
+            StopInviteCommand = new RelayCommand(_ => StopInvite(), _ => IsInviting);
 
             // Initialize ContactsList if not already done
             if (ExtractedDataStore.Instance.ContactsList == null)
@@ -124,94 +112,9 @@ namespace TELEBLASTER_PRO.ViewModels
             }
 
             // Initialize ActivePhoneNumbers
-            ActivePhoneNumbers = new ObservableCollection<string>(GetActivePhoneNumbers());
-
-            // Set default delay values
-            MinDelay = 4;
-            MaxDelay = 6;
-
-            // Set default values for new properties
-            MembersPerNumber = 2; // Default value, adjust as needed
-            SwitchNumberAutomatically = false; // Default value
+            var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active");
+            ActivePhoneNumbers = new ObservableCollection<string>(activeAccounts.Select(account => account.Phone));
         }
-
-        private IEnumerable<string> GetActivePhoneNumbers()
-        {
-            return Account.GetAccountsFromDatabase()
-                          .Where(account => account.Status == "Active")
-                          .Select(account => account.Phone);
-        }
-
-        private async Task StartInviteAsync()
-        {
-            _isInviting = true;
-            _cancellationTokenSource = new CancellationTokenSource();
-
-            var groupLink = GroupLink;
-            var membersPerNumber = MembersPerNumber;
-            var selectedContacts = ContactsList.Where(c => c.IsChecked).ToList();
-            var activePhoneNumbers = ActivePhoneNumbers.ToList(); // Use all active phone numbers
-
-            int phoneNumberIndex = 0; // Start with the first phone number
-            int invitesSent = 0; // Track the number of invites sent with the current phone number
-
-            foreach (var contact in selectedContacts)
-            {
-                if (_cancellationTokenSource.Token.IsCancellationRequested)
-                {
-                    break;
-                }
-
-                var phoneNumber = activePhoneNumbers[phoneNumberIndex];
-
-                try
-                {
-                    var success = await InviteMembersAsync(phoneNumber, groupLink, new List<string> { contact.ContactId });
-                    InviteStatuses[contact.ContactId] = success ? "Success" : "Failed";
-                }
-                catch (Exception ex)
-                {
-                    InviteStatuses[contact.ContactId] = "Failed";
-                    MessageBox.Show($"Error inviting member {contact.ContactId}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-
-                invitesSent++;
-
-                // Switch to the next phone number after a certain number of invites
-                if (invitesSent >= membersPerNumber)
-                {
-                    phoneNumberIndex = (phoneNumberIndex + 1) % activePhoneNumbers.Count;
-                    invitesSent = 0; // Reset the invite count for the new phone number
-                }
-
-                int delay = new Random().Next(MinDelay, MaxDelay);
-                await Task.Delay(TimeSpan.FromSeconds(delay), _cancellationTokenSource.Token);
-            }
-
-            _isInviting = false;
-        }
-
-        private async Task<bool> InviteMembersAsync(string phoneNumber, string groupLink, IEnumerable<string> memberIds)
-        {
-            using (Py.GIL())
-            {
-                dynamic py = Py.Import("functions");
-                var result = py.invite_members_sync(phoneNumber, groupLink, memberIds.ToList(), memberIds.Count());
-                return result[0];
-            }
-        }
-
-        private void StopInvite()
-        {
-            if (_isInviting)
-            {
-                _cancellationTokenSource.Cancel();
-                _isInviting = false;
-            }
-        }
-
-        private bool CanStartInvite() => !_isInviting;
-        private bool CanStopInvite() => _isInviting;
 
         private void ImportContacts()
         {
@@ -319,6 +222,147 @@ namespace TELEBLASTER_PRO.ViewModels
                     MessageBox.Show($"Error exporting contacts: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        private async void StartInvite()
+        {
+            IsInviting = true;
+            CurrentInviteStatus = "Starting invite process...";
+            OnPropertyChanged(nameof(CurrentInviteStatus));
+            Debug.WriteLine("Starting invite process...");
+
+            var selectedContacts = ContactsList.Where(c => c.IsChecked).ToList();
+            if (selectedContacts.Count == 0)
+            {
+                MessageBox.Show("No contacts selected for invitation.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                IsInviting = false;
+                Debug.WriteLine("No contacts selected for invitation.");
+                return;
+            }
+
+            var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active").ToList();
+            if (activeAccounts.Count == 0)
+            {
+                MessageBox.Show("No active accounts available.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                IsInviting = false;
+                Debug.WriteLine("No active accounts available.");
+                return;
+            }
+
+            int membersPerNumber = MembersPerNumber;
+            int totalContacts = selectedContacts.Count;
+            int currentIndex = 0;
+
+            if (SwitchNumberAutomatically)
+            {
+                while (currentIndex < totalContacts)
+                {
+                    foreach (var account in activeAccounts)
+                    {
+                        if (currentIndex >= totalContacts)
+                            break;
+
+                        string sessionName = account.SessionName;
+                        var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
+
+                        var result = await Task.Run(() => InviteMembers(sessionName, GroupLink, members));
+                        if (!result)
+                        {
+                            CurrentInviteStatus = "Failed to invite some members";
+                            OnPropertyChanged(nameof(CurrentInviteStatus));
+                            Debug.WriteLine(CurrentInviteStatus);
+                            IsInviting = false;
+                            return;
+                        }
+
+                        currentIndex += membersPerNumber;
+                    }
+                }
+            }
+            else
+            {
+                var selectedAccount = activeAccounts.FirstOrDefault(a => a.Phone == SelectedPhoneNumber);
+                if (selectedAccount == null)
+                {
+                    MessageBox.Show("Selected account is not active.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    IsInviting = false;
+                    Debug.WriteLine("Selected account is not active.");
+                    return;
+                }
+
+                string sessionName = selectedAccount.SessionName;
+                while (currentIndex < totalContacts)
+                {
+                    var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
+
+                    var result = await Task.Run(() => InviteMembers(sessionName, GroupLink, members));
+                    if (!result)
+                    {
+                        CurrentInviteStatus = "Failed to invite some members";
+                        OnPropertyChanged(nameof(CurrentInviteStatus));
+                        Debug.WriteLine(CurrentInviteStatus);
+                        IsInviting = false;
+                        return;
+                    }
+
+                    currentIndex += membersPerNumber;
+                }
+            }
+
+            CurrentInviteStatus = "All members invited successfully";
+            OnPropertyChanged(nameof(CurrentInviteStatus));
+            Debug.WriteLine(CurrentInviteStatus);
+
+            IsInviting = false;
+            Debug.WriteLine("Invite process completed.");
+        }
+
+        private void StopInvite()
+        {
+            IsInviting = false;
+            CurrentInviteStatus = "Invitation process stopped.";
+            OnPropertyChanged(nameof(CurrentInviteStatus));
+        }
+
+        private bool InviteMembers(string sessionName, string groupLink, List<Contacts> members)
+        {
+            try
+            {
+                using (Py.GIL())
+                {
+                    dynamic py = Py.Import("functions");
+                    var memberIds = members.Select(m => m.ContactId).ToList();
+                    dynamic result = py.invite_members_sync(sessionName, groupLink, memberIds, MinDelay, MaxDelay);
+                    
+                    bool success = result[0].As<bool>();
+                    string message = result[1].As<string>();
+
+                    foreach (var member in members)
+                    {
+                        member.Status = success ? "Success" : "Failed";
+                    }
+
+                    Debug.WriteLine($"Invite result: {success}, Message: {message}");
+                    return success;
+                }
+            }
+            catch (Exception ex)
+            {
+                foreach (var member in members)
+                {
+                    member.Status = "Failed";
+                }
+                MessageBox.Show($"Error during invitation: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine($"Error during invitation: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Method to get session name from phone number
+        private string GetSessionNameFromPhoneNumber(string phoneNumber)
+        {
+            var account = Account.GetAccountsFromDatabase().FirstOrDefault(a => a.Phone == phoneNumber);
+            return account?.SessionName; // Assuming Account has a SessionName property
         }
     }
 }

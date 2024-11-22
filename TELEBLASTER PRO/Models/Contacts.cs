@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SQLite; 
 using TELEBLASTER_PRO.Helpers;
+using System.ComponentModel;
 
 namespace TELEBLASTER_PRO.Models
 {
-    public class Contacts
+    public class Contacts : INotifyPropertyChanged
     {
         public int Id { get; set; }
         public int UserId { get; set; }
@@ -18,6 +19,24 @@ namespace TELEBLASTER_PRO.Models
         public string LastName { get; set; }
         public string UserName { get; set; }
         public bool IsChecked { get; set; }
+
+        private string _status;
+        public string Status
+        {
+            get => _status;
+            set
+            {
+                _status = value;
+                OnPropertyChanged(nameof(Status));
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         public static List<Contacts> LoadContacts()
         {

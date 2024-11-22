@@ -158,8 +158,8 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     dynamic py = Py.Import("functions");
                     Debug.WriteLine("Python module 'functions' imported successfully.");
-                    await Task.Run(() => py.send_message(sessionName, contact.ContactId, message, AttachmentFilePath));
-                    Debug.WriteLine("Python function 'send_message' executed successfully.");
+                    var result = await Task.Run(() => py.send_message(sessionName, contact.ContactId, message, AttachmentFilePath));
+                    Debug.WriteLine($"Python function 'send_message' executed successfully with result: {result}");
                 }
                 catch (Exception ex)
                 {
