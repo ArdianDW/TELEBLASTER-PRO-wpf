@@ -312,7 +312,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
                 List<GroupMembers> extractedMembers = null;
 
-                while (true) // Loop until successful
+                while (true) 
                 {
                     try
                     {
@@ -321,7 +321,7 @@ namespace TELEBLASTER_PRO.ViewModels
                             using (Py.GIL())
                             {
                                 dynamic py = Py.Import("functions");
-                                py.extract_members_sync(sessionName, groupId, SelectedGroup.GroupName, new Action<string>(UpdateExtractStatus));
+                                   py.extract_members_sync(sessionName, groupId, SelectedGroup.GroupName, new Action<string>(UpdateExtractStatus));
                             }
                             return LoadExtractedMembers(groupId);
                         });

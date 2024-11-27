@@ -13,39 +13,82 @@ using System.Windows;
 using System.Threading.Tasks;
 using TELEBLASTER_PRO.Helpers;
 using ClosedXML.Excel;
+using TELEBLASTER_PRO.ViewModels;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
     internal class SendMessageViewModel : INotifyPropertyChanged
     {
         private readonly AccountViewModel _accountViewModel;
-        private string _selectedPhoneNumber;
-        public ObservableCollection<string> ActivePhoneNumbers { get; }
-        public ObservableCollection<Contacts> ContactsList { get; private set; }
 
-        private string _customTextBoxText;
-        public string CustomTextBoxText
+        public ObservableCollection<string> ActivePhoneNumbers { get; }
+        public ObservableCollection<Contacts> ContactsList
         {
-            get => _customTextBoxText;
+            get => ExtractedDataStore.Instance.ContactsList;
             set
             {
-                _customTextBoxText = value;
+                ExtractedDataStore.Instance.ContactsList = value;
+                OnPropertyChanged(nameof(ContactsList));
+            }
+        }
+
+        public string CustomTextBoxText
+        {
+            get => ExtractedDataStore.Instance.MessageText;
+            set
+            {
+                ExtractedDataStore.Instance.MessageText = value;
                 OnPropertyChanged(nameof(CustomTextBoxText));
             }
         }
 
         public string SelectedPhoneNumber
         {
-            get => _selectedPhoneNumber;
+            get => ExtractedDataStore.Instance.SelectedPhoneNumber;
             set
             {
-                _selectedPhoneNumber = value;
+                ExtractedDataStore.Instance.SelectedPhoneNumber = value;
                 OnPropertyChanged(nameof(SelectedPhoneNumber));
-                
-                Debug.WriteLine($"Selected phone number: {_selectedPhoneNumber}");
+            }
+        }
 
-                string sessionName = GetSessionNameFromPhoneNumber(_selectedPhoneNumber);
-                Debug.WriteLine($"Session name for extraction: {sessionName}");
+        public bool IsSwitchNumberChecked
+        {
+            get => ExtractedDataStore.Instance.IsSwitchNumberChecked;
+            set
+            {
+                ExtractedDataStore.Instance.IsSwitchNumberChecked = value;
+                OnPropertyChanged(nameof(IsSwitchNumberChecked));
+            }
+        }
+
+        public int MessagesPerNumber
+        {
+            get => ExtractedDataStore.Instance.MessagesPerNumber > 0 ? ExtractedDataStore.Instance.MessagesPerNumber : 2; // Default to 2
+            set
+            {
+                ExtractedDataStore.Instance.MessagesPerNumber = value;
+                OnPropertyChanged(nameof(MessagesPerNumber));
+            }
+        }
+
+        public int MinDelay
+        {
+            get => ExtractedDataStore.Instance.MinDelay > 0 ? ExtractedDataStore.Instance.MinDelay : 3; // Default to 3
+            set
+            {
+                ExtractedDataStore.Instance.MinDelay = value;
+                OnPropertyChanged(nameof(MinDelay));
+            }
+        }
+
+        public int MaxDelay
+        {
+            get => ExtractedDataStore.Instance.MaxDelay > 0 ? ExtractedDataStore.Instance.MaxDelay : 5; // Default to 5
+            set
+            {
+                ExtractedDataStore.Instance.MaxDelay = value;
+                OnPropertyChanged(nameof(MaxDelay));
             }
         }
 
@@ -67,16 +110,38 @@ namespace TELEBLASTER_PRO.ViewModels
 
         public ICommand BrowseFileCommand { get; }
 
+        private bool _isSending;
+        public bool IsSending
+        {
+            get => _isSending;
+            set
+            {
+                _isSending = value;
+                OnPropertyChanged(nameof(IsSending));
+            }
+        }
+
+        private string _currentRecipientName;
+        public string CurrentRecipientName
+        {
+            get => _currentRecipientName;
+            set
+            {
+                _currentRecipientName = value;
+                OnPropertyChanged(nameof(CurrentRecipientName));
+            }
+        }
+
         public SendMessageViewModel(AccountViewModel accountViewModel)
         {
             _accountViewModel = accountViewModel;
             ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
-            ContactsList = new ObservableCollection<Contacts>();
+            ContactsList = ExtractedDataStore.Instance.ContactsList;
             ExtractContactsCommand = new RelayCommand(_ => ExtractContacts());
-            SendMessageCommand = new RelayCommand(_ => SendMessage());
             BrowseFileCommand = new RelayCommand(_ => BrowseFile());
             ExportContactsCommand = new RelayCommand(_ => ExportContacts());
             ImportContactsCommand = new RelayCommand(_ => ImportContacts());
+            SendMessageCommand = new RelayCommand(_ => SendMessage());
         }
 
         public IEnumerable<Account> GetActiveAccounts()
@@ -92,10 +157,8 @@ namespace TELEBLASTER_PRO.ViewModels
                 return;
             }
 
-            // Get session_name from SelectedPhoneNumber
             string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
 
-            // Call the Python function to extract contacts
             using (Py.GIL())
             {
                 dynamic py = Py.Import("functions");
@@ -120,52 +183,6 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     ContactsList.Add(contact);
                 }
-        }
-
-        private async void SendMessage()
-        {
-            if (string.IsNullOrEmpty(SelectedPhoneNumber))
-            {
-                MessageBox.Show("Please select a phone number.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var selectedContacts = ContactsList.Where(c => c.IsChecked).ToList();
-            if (!selectedContacts.Any())
-            {
-                MessageBox.Show("Please select at least one contact.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            string message = CustomTextBoxText; // Assume you bind the TextBox text to this property
-
-            // Get session_name from SelectedPhoneNumber
-            string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
-
-            foreach (var contact in selectedContacts)
-            {
-                await SendMessageToContactAsync(sessionName, contact, message);
-            }
-        }
-
-        private async Task SendMessageToContactAsync(string sessionName, Contacts contact, string message)
-        {
-            Debug.WriteLine($"Sending message with sessionName: {sessionName}, contact UserId: {contact.ContactId}, message: {message}, attachment: {AttachmentFilePath}");
-
-            using (Py.GIL())
-            {
-                try
-                {
-                    dynamic py = Py.Import("functions");
-                    Debug.WriteLine("Python module 'functions' imported successfully.");
-                    var result = await Task.Run(() => py.send_message(sessionName, contact.ContactId, message, AttachmentFilePath));
-                    Debug.WriteLine($"Python function 'send_message' executed successfully with result: {result}");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error executing Python function: {ex.Message}");
-                }
-            }
         }
 
         private void BrowseFile()
@@ -246,8 +263,8 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     using (var workbook = new XLWorkbook(filePath))
                     {
-                        var worksheet = workbook.Worksheet(1); // Assuming the data is in the first worksheet
-                        var rows = worksheet.RowsUsed().Skip(1); // Skip header row
+                        var worksheet = workbook.Worksheet(1);
+                        var rows = worksheet.RowsUsed().Skip(1);
 
                         var contacts = new List<Contacts>();
 
@@ -283,6 +300,112 @@ namespace TELEBLASTER_PRO.ViewModels
                     MessageBox.Show($"Error importing contacts: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        public void SendMessage()
+        {
+            Task.Run(() =>
+            {
+                bool allMessagesSent = false;
+                while (!allMessagesSent)
+                {
+                    try
+                    {
+                        IsSending = true; // Mulai pengiriman
+                        var recipientIds = ContactsList.Where(c => c.IsChecked).Select(c => c.ContactId).ToList();
+                        int minDelay = MinDelay;
+                        int maxDelay = MaxDelay;
+                        int messagesPerNumber = MessagesPerNumber;
+
+                        Debug.WriteLine($"Message Text: {CustomTextBoxText}");
+                        Debug.WriteLine("Recipient IDs: " + string.Join(", ", recipientIds));
+                        Debug.WriteLine($"Min Delay: {minDelay}, Max Delay: {maxDelay}");
+                        Debug.WriteLine($"Messages Per Number: {messagesPerNumber}");
+                        Debug.WriteLine($"Attachment File Path: {AttachmentFilePath}");
+                        Debug.WriteLine($"Running on thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+
+                        var activeAccounts = GetActiveAccounts().ToList();
+                        if (IsSwitchNumberChecked && activeAccounts.Any())
+                        {
+                            int totalRecipients = recipientIds.Count;
+                            int accountIndex = 0;
+
+                            for (int i = 0; i < totalRecipients; i += messagesPerNumber)
+                            {
+                                var sessionName = activeAccounts[accountIndex].SessionName;
+                                var batchRecipients = recipientIds.Skip(i).Take(messagesPerNumber).ToList();
+
+                                foreach (var recipientId in batchRecipients)
+                                {
+                                    var contact = ContactsList.FirstOrDefault(c => c.ContactId == recipientId);
+                                    CurrentRecipientName = contact?.FirstName ?? "Unknown";
+
+                                    Debug.WriteLine($"Using session: {sessionName} for recipient: {CurrentRecipientName}");
+
+                                    using (Py.GIL())
+                                    {
+                                        dynamic py = Py.Import("functions");
+                                        var result = py.send_message(sessionName, CustomTextBoxText, new List<string> { recipientId }, minDelay, maxDelay, AttachmentFilePath);
+                                        bool success = result[0];
+                                        string message = result[1];
+
+                                        contact.Status = success ? "Success" : "Failed";
+                                    }
+                                }
+
+                                accountIndex = (accountIndex + 1) % activeAccounts.Count;
+                            }
+                        }
+                        else
+                        {
+                            string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
+                            Debug.WriteLine($"Using session: {sessionName} for all recipients.");
+
+                            foreach (var recipientId in recipientIds)
+                            {
+                                var contact = ContactsList.FirstOrDefault(c => c.ContactId == recipientId);
+                                CurrentRecipientName = contact?.FirstName ?? "Unknown";
+
+                                using (Py.GIL())
+                                {
+                                    dynamic py = Py.Import("functions");
+                                    var result = py.send_message(sessionName, CustomTextBoxText, new List<string> { recipientId }, minDelay, maxDelay, AttachmentFilePath);
+                                    bool success = result[0];
+                                    string message = result[1];
+
+                                    contact.Status = success ? "Success" : "Failed";
+                                }
+                            }
+                        }
+
+                        allMessagesSent = true; // Semua pesan berhasil dikirim
+                    }
+                    catch (PythonException pe)
+                    {
+                        if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                        {
+                            Debug.WriteLine("Retrying due to Python error: " + pe.Message);
+                            Task.Delay(1000).Wait(); // Wait before retrying
+                            Task.Run(() => SendMessage()); // Start a new task to retry
+                            return; // Exit current task
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"Python error during message sending: {pe.Message}");
+                            break; // Exit loop if it's a different Python error
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error during message sending: {ex.Message}");
+                        break; // Exit loop on other exceptions
+                    }
+                    finally
+                    {
+                        IsSending = false; // Selesai pengiriman
+                    }
+                }
+            });
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

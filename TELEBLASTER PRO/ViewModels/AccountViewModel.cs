@@ -57,15 +57,15 @@ namespace TELEBLASTER_PRO.ViewModels
         public AccountViewModel()
         {
             Accounts = new ObservableCollection<Account>(Account.GetAccountsFromDatabase());
-            RefreshCommand = new RelayCommand(RefreshAccounts, CanExecuteRefresh);
+            RefreshCommand = new RelayCommand(async _ => await RefreshAccountsAsync(null), CanExecuteRefresh);
             AddAccountCommand = new RelayCommand(AddAccount);
             LoginCommand = new RelayCommand(Login, CanExecuteLogin);
             LogoutCommand = new RelayCommand(Logout, CanExecuteLogout);
         }
 
-        private async void RefreshAccounts(object parameter)
+        public async Task RefreshAccountsAsync(object parameter)
         {
-            System.Diagnostics.Debug.WriteLine("RefreshAccounts method called");
+            System.Diagnostics.Debug.WriteLine("RefreshAccountsAsync method called");
             IsRefreshing = true;
             try
             {
@@ -151,7 +151,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 }
 
                 Debug.WriteLine("Finished executing addAccount.py");
-                RefreshAccounts(null);
+                RefreshAccountsAsync(null);
             }
             catch (Exception ex)
             {

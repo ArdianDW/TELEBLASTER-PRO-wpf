@@ -21,6 +21,12 @@ namespace TELEBLASTER_PRO.ViewModels
 
         public ObservableCollection<Contacts> ContactsList { get; set; }
 
+        public string MessageText { get; set; }
+        public bool IsSwitchNumberChecked { get; set; }
+        public int MessagesPerNumber { get; set; }
+        public int MinDelay { get; set; }
+        public int MaxDelay { get; set; }
+
         private ExtractedDataStore()
         {
             GroupLinks = new ObservableCollection<GroupLinks>();

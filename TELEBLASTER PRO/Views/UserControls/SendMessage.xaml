@@ -107,17 +107,22 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
-                                        <CheckBox Margin="0, 5, 0, 0" Grid.Row="0" FontWeight="SemiBold">Switch phone number automatically</CheckBox>
+                                        <CheckBox Content="Switch phone number automatically"
+                                                  IsChecked="{Binding IsSwitchNumberChecked, UpdateSourceTrigger=PropertyChanged}"
+                                                  Margin="0, 5, 0, 0" Grid.Row="0" FontWeight="SemiBold"/>
                                         <StackPanel Orientation="Horizontal" Grid.Row="1">
-                                            <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}"
-                                              HorizontalAlignment="Left" Height="20" Width="50"/>
+                                            <controls:NumericUpDownControl Value="{Binding MessagesPerNumber, UpdateSourceTrigger=PropertyChanged}"
+                                                                           Style="{StaticResource NumericUpDownControlStyle}"
+                                                                           HorizontalAlignment="Left" Height="20" Width="50"/>
                                             <TextBlock VerticalAlignment="Center" Margin="5, 0, 0, 0" FontWeight="SemiBold">Message per number</TextBlock>
                                         </StackPanel>
                                     </Grid>
                                     <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,5,0,0">
-                                        <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35"/>
+                                        <controls:NumericUpDownControl Value="{Binding MinDelay, UpdateSourceTrigger=PropertyChanged}"
+                                                                           Style="{StaticResource NumericUpDownControlStyle}" Width="35"/>
                                         <Label Content="━" VerticalContentAlignment="Center"/>
-                                        <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35"/>
+                                        <controls:NumericUpDownControl Value="{Binding MaxDelay, UpdateSourceTrigger=PropertyChanged}"
+                                                                           Style="{StaticResource NumericUpDownControlStyle}" Width="35"/>
                                         <TextBlock Text="Delay per message" Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                         <Button Content="Send" Width="100" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" HorizontalAlignment="Right"
                                                 Command="{Binding SendMessageCommand}"/>
@@ -137,15 +142,26 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Label Content="Contacts" 
-                           HorizontalAlignment="Left" 
-                           VerticalAlignment="Center" 
-                           FontFamily="Century Gothic" 
-                           FontSize="18" 
-                           FontWeight="Bold" 
-                           Grid.Row="0" 
-                           Padding="0,5,0,0"
-                           Margin="15,0,0,0" Height="30" Width="223"/>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="Contacts" 
+                               HorizontalAlignment="Left" 
+                               VerticalAlignment="Center" 
+                               FontFamily="Century Gothic" 
+                               FontSize="18" 
+                               Grid.Column="0"
+                               FontWeight="Bold" 
+                               Padding="0,5,0,0"
+                               Margin="15,0,0,0" Height="30" Width="Auto"/>
+                            <StackPanel Orientation="Horizontal" x:Name="SendMessageStatusBar" Visibility="{Binding IsSending, Converter={StaticResource BooleanToVisibilityConverter}}" Grid.Column="1">
+                                <controls:DonutSpinner Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="20,0,0,0"/>
+                                <TextBlock Text="{Binding CurrentRecipientName, StringFormat='Sending to {0}...'}" VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Grid>
+                        
 
                         <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
 
@@ -190,7 +206,7 @@
                                     </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <CheckBox IsChecked="{Binding IsChecked}" />
+                                            <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -200,7 +216,7 @@
                                 <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                                <DataGridTextColumn Header="Status" Width="*"/>
+                                <DataGridTextColumn Header="Status" Width="*" Binding="{Binding Status}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock Text="No data available"
