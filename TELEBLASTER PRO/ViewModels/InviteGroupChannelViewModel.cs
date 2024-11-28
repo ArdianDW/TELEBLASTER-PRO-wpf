@@ -226,95 +226,134 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private async void StartInvite()
         {
-            IsInviting = true;
-            CurrentInviteStatus = "Starting invite process...";
-            OnPropertyChanged(nameof(CurrentInviteStatus));
-            Debug.WriteLine("Starting invite process...");
-
-            var selectedContacts = ContactsList.Where(c => c.IsChecked).ToList();
-            if (selectedContacts.Count == 0)
+            await Task.Run(() =>
             {
-                MessageBox.Show("No contacts selected for invitation.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                IsInviting = false;
-                Debug.WriteLine("No contacts selected for invitation.");
-                return;
-            }
-
-            var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active").ToList();
-            if (activeAccounts.Count == 0)
-            {
-                MessageBox.Show("No active accounts available.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                IsInviting = false;
-                Debug.WriteLine("No active accounts available.");
-                return;
-            }
-
-            int membersPerNumber = MembersPerNumber;
-            int totalContacts = selectedContacts.Count;
-            int currentIndex = 0;
-
-            if (SwitchNumberAutomatically)
-            {
-                while (currentIndex < totalContacts)
+                bool allInvitesSent = false;
+                while (!allInvitesSent)
                 {
-                    foreach (var account in activeAccounts)
+                    try
                     {
-                        if (currentIndex >= totalContacts)
-                            break;
+                        IsInviting = true;
+                        CurrentInviteStatus = "Starting invite process...";
+                        OnPropertyChanged(nameof(CurrentInviteStatus));
+                        Debug.WriteLine("Starting invite process...");
 
-                        string sessionName = account.SessionName;
-                        var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
-
-                        var result = await Task.Run(() => InviteMembers(sessionName, GroupLink, members));
-                        if (!result)
+                        var selectedContacts = ContactsList.Where(c => c.IsChecked).ToList();
+                        if (selectedContacts.Count == 0)
                         {
-                            CurrentInviteStatus = "Failed to invite some members";
+                            CurrentInviteStatus = "No contacts selected for invitation.";
                             OnPropertyChanged(nameof(CurrentInviteStatus));
                             Debug.WriteLine(CurrentInviteStatus);
                             IsInviting = false;
                             return;
                         }
 
-                        currentIndex += membersPerNumber;
-                    }
-                }
-            }
-            else
-            {
-                var selectedAccount = activeAccounts.FirstOrDefault(a => a.Phone == SelectedPhoneNumber);
-                if (selectedAccount == null)
-                {
-                    MessageBox.Show("Selected account is not active.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    IsInviting = false;
-                    Debug.WriteLine("Selected account is not active.");
-                    return;
-                }
+                        var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active").ToList();
+                        if (activeAccounts.Count == 0)
+                        {
+                            CurrentInviteStatus = "No active accounts available.";
+                            OnPropertyChanged(nameof(CurrentInviteStatus));
+                            Debug.WriteLine(CurrentInviteStatus);
+                            IsInviting = false;
+                            return;
+                        }
 
-                string sessionName = selectedAccount.SessionName;
-                while (currentIndex < totalContacts)
-                {
-                    var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
+                        int membersPerNumber = MembersPerNumber;
+                        int totalContacts = selectedContacts.Count;
+                        int currentIndex = 0;
 
-                    var result = await Task.Run(() => InviteMembers(sessionName, GroupLink, members));
-                    if (!result)
-                    {
-                        CurrentInviteStatus = "Failed to invite some members";
+                        if (SwitchNumberAutomatically)
+                        {
+                            while (currentIndex < totalContacts)
+                            {
+                                foreach (var account in activeAccounts)
+                                {
+                                    if (currentIndex >= totalContacts)
+                                        break;
+
+                                    string sessionName = account.SessionName;
+                                    var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
+
+                                    var result = InviteMembers(sessionName, GroupLink, members);
+                                    foreach (var member in members)
+                                    {
+                                        member.Status = result ? "Success" : "Failed";
+                                    }
+
+                                    currentIndex += membersPerNumber;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var selectedAccount = activeAccounts.FirstOrDefault(a => a.Phone == SelectedPhoneNumber);
+                            if (selectedAccount == null)
+                            {
+                                CurrentInviteStatus = "Selected account is not active.";
+                                OnPropertyChanged(nameof(CurrentInviteStatus));
+                                Debug.WriteLine(CurrentInviteStatus);
+                                IsInviting = false;
+                                return;
+                            }
+
+                            string sessionName = selectedAccount.SessionName;
+                            while (currentIndex < totalContacts)
+                            {
+                                var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
+
+                                var result = InviteMembers(sessionName, GroupLink, members);
+                                foreach (var member in members)
+                                {
+                                    member.Status = result ? "Success" : "Failed";
+                                }
+
+                                currentIndex += membersPerNumber;
+                            }
+                        }
+
+                        allInvitesSent = true;
+                        CurrentInviteStatus = "All members invited successfully";
                         OnPropertyChanged(nameof(CurrentInviteStatus));
                         Debug.WriteLine(CurrentInviteStatus);
-                        IsInviting = false;
-                        return;
                     }
-
-                    currentIndex += membersPerNumber;
+                    catch (PythonException pe)
+                    {
+                        if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                        {
+                            Debug.WriteLine("Retrying due to Python error: " + pe.Message);
+                            Task.Delay(1000).Wait(); // Wait before retrying
+                            continue; // Retry the entire process
+                        }
+                        else
+                        {
+                            CurrentInviteStatus = $"Python error during invitation: {pe.Message}";
+                            OnPropertyChanged(nameof(CurrentInviteStatus));
+                            Debug.WriteLine(CurrentInviteStatus);
+                            break; // Exit loop if it's a different Python error
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                        {
+                            Debug.WriteLine("Retrying due to general error: " + ex.Message);
+                            Task.Delay(1000).Wait(); // Wait before retrying
+                            continue; // Retry the entire process
+                        }
+                        else
+                        {
+                            CurrentInviteStatus = $"Error during invitation: {ex.Message}";
+                            OnPropertyChanged(nameof(CurrentInviteStatus));
+                            Debug.WriteLine(CurrentInviteStatus);
+                            break; // Exit loop on other exceptions
+                        }
+                    }
+                    finally
+                    {
+                        IsInviting = false;
+                    }
                 }
-            }
-
-            CurrentInviteStatus = "All members invited successfully";
-            OnPropertyChanged(nameof(CurrentInviteStatus));
-            Debug.WriteLine(CurrentInviteStatus);
-
-            IsInviting = false;
-            Debug.WriteLine("Invite process completed.");
+            });
         }
 
         private void StopInvite()
@@ -352,8 +391,17 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     member.Status = "Failed";
                 }
-                MessageBox.Show($"Error during invitation: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Debug.WriteLine($"Error during invitation: {ex.Message}");
+                
+                if (ex.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                {
+                    Debug.WriteLine("Retrying due to error: " + ex.Message);
+                    Task.Delay(1000).Wait(); // Wait before retrying
+                    return false; // Indicate failure to trigger retry in StartInvite
+                }
+                
+                CurrentInviteStatus = $"Error during invitation: {ex.Message}";
+                OnPropertyChanged(nameof(CurrentInviteStatus));
+                Debug.WriteLine(CurrentInviteStatus);
                 return false;
             }
         }
