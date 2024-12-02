@@ -20,7 +20,7 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand StartInviteCommand { get; }
         public ICommand StopInviteCommand { get; }
 
-        public ObservableCollection<Contacts> ContactsList => ExtractedDataStore.Instance.ContactsList;
+        public ObservableCollection<Contacts> ContactsList => ExtractedDataStore.Instance.InviteGroupContactsList;
         public ObservableCollection<string> ActivePhoneNumbers { get; set; }
         private string _selectedPhoneNumber;
         public string SelectedPhoneNumber
@@ -105,12 +105,6 @@ namespace TELEBLASTER_PRO.ViewModels
             StartInviteCommand = new RelayCommand(_ => StartInvite(), _ => !IsInviting);
             StopInviteCommand = new RelayCommand(_ => StopInvite(), _ => IsInviting);
 
-            // Initialize ContactsList if not already done
-            if (ExtractedDataStore.Instance.ContactsList == null)
-            {
-                ExtractedDataStore.Instance.ContactsList = new ObservableCollection<Contacts>();
-            }
-
             // Initialize ActivePhoneNumbers
             var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active");
             ActivePhoneNumbers = new ObservableCollection<string>(activeAccounts.Select(account => account.Phone));
@@ -134,8 +128,8 @@ namespace TELEBLASTER_PRO.ViewModels
                         var worksheet = workbook.Worksheet(1); // Assuming the data is in the first worksheet
                         var rows = worksheet.RowsUsed().Skip(1); // Skip header row
 
-                        var contacts = new List<Contacts>();
-
+                        // Clear existing contacts and add new ones
+                        ContactsList.Clear();
                         foreach (var row in rows)
                         {
                             var contactId = row.Cell(2).GetValue<string>();
@@ -155,11 +149,8 @@ namespace TELEBLASTER_PRO.ViewModels
                                 UserName = row.Cell(6).GetValue<string>(),
                                 IsChecked = false
                             };
-                            contacts.Add(contact);
+                            ContactsList.Add(contact);
                         }
-
-                        // Update the global ContactsList
-                        ExtractedDataStore.Instance.ContactsList = new ObservableCollection<Contacts>(contacts);
                     }
 
                     MessageBox.Show("Contacts imported successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);

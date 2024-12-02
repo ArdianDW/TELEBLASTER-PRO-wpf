@@ -163,8 +163,34 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             if (SelectedAccount != null)
             {
-                SelectedAccount.Status = "Active";
-                OnPropertyChanged(nameof(Accounts));
+                try
+                {
+                    string pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "python.exe");
+                    string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "login.py");
+
+                    Debug.WriteLine($"Python Path: {pythonPath}");
+                    Debug.WriteLine($"Script Path: {scriptPath}");
+
+                    ProcessStartInfo start = new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = $"/c \"\"{pythonPath}\" \"{scriptPath}\" \"{SelectedAccount.SessionName}\"\"",
+                        UseShellExecute = true,
+                        CreateNoWindow = false
+                    };
+
+                    using (Process process = Process.Start(start))
+                    {
+                        process.WaitForExit();
+                    }
+
+                    Debug.WriteLine("Finished executing login.py");
+                    RefreshAccountsAsync(null);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("An error occurred while logging in: " + ex.Message);
+                }
             }
         }
 
@@ -173,12 +199,68 @@ namespace TELEBLASTER_PRO.ViewModels
             return SelectedAccount != null && SelectedAccount.Status != "Active";
         }
 
+        private async Task LogoutAccount(Account account)
+        {
+            if (account != null)
+            {
+                bool logoutSuccessful = false;
+                while (!logoutSuccessful)
+                {
+                    try
+                    {
+                        // Use Dispatcher to ensure the Python operation runs on the main thread
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            using (Py.GIL())
+                            {
+                                dynamic py = Py.Import("functions");
+                                py.logout_and_delete_session_sync(account.SessionName);
+                            }
+                        });
+
+                        account.Status = "Inactive";
+                        account.SessionName = string.Empty; 
+                        account.UpdateStatusInDatabase();
+                        OnPropertyChanged(nameof(Accounts));
+
+                        logoutSuccessful = true; 
+                    }
+                    catch (PythonException pe)
+                    {
+                        if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                        {
+                            Debug.WriteLine("Retrying logout due to Python error: " + pe.Message);
+                            await Task.Delay(1000); // Wait before retrying
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"Python error during logout for {account.Username}: {pe.Message}");
+                            break; // Exit loop if it's a different Python error
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error during logout for {account.Username}: {ex.Message}");
+                        break; // Exit loop on other exceptions
+                    }
+                }
+            }
+        }
+
         private void Logout(object parameter)
         {
             if (SelectedAccount != null)
             {
-                SelectedAccount.Status = "Inactive";
-                OnPropertyChanged(nameof(Accounts));
+                var result = MessageBox.Show(
+                    $"Are you sure you want to log out?",
+                    "Logout Confirmation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    LogoutAccount(SelectedAccount);
+                }
             }
         }
 
@@ -201,7 +283,6 @@ namespace TELEBLASTER_PRO.ViewModels
 
             public IEnumerable<Account> GetActiveAccounts()
         {
-            // Filter akun yang statusnya "Active"
             return Accounts.Where(account => account.Status == "Active");
         }
     }

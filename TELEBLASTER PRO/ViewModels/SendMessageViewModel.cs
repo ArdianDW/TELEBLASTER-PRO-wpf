@@ -22,15 +22,7 @@ namespace TELEBLASTER_PRO.ViewModels
         private readonly AccountViewModel _accountViewModel;
 
         public ObservableCollection<string> ActivePhoneNumbers { get; }
-        public ObservableCollection<Contacts> ContactsList
-        {
-            get => ExtractedDataStore.Instance.ContactsList;
-            set
-            {
-                ExtractedDataStore.Instance.ContactsList = value;
-                OnPropertyChanged(nameof(ContactsList));
-            }
-        }
+        public ObservableCollection<Contacts> ContactsList => ExtractedDataStore.Instance.SendMessageContactsList;
 
         public string CustomTextBoxText
         {
@@ -136,7 +128,6 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             _accountViewModel = accountViewModel;
             ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
-            ContactsList = ExtractedDataStore.Instance.ContactsList;
             ExtractContactsCommand = new RelayCommand(_ => ExtractContacts());
             BrowseFileCommand = new RelayCommand(_ => BrowseFile());
             ExportContactsCommand = new RelayCommand(_ => ExportContacts());
@@ -290,7 +281,11 @@ namespace TELEBLASTER_PRO.ViewModels
                             contacts.Add(contact);
                         }
 
-                        ContactsList = new ObservableCollection<Contacts>(contacts);
+                        ContactsList.Clear();
+                        foreach (var contact in contacts)
+                        {
+                            ContactsList.Add(contact);
+                        }
                     }
 
                     MessageBox.Show("Contacts imported successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);

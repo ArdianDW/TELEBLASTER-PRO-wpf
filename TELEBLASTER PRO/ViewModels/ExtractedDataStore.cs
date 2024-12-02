@@ -20,6 +20,8 @@ namespace TELEBLASTER_PRO.ViewModels
         public ObservableCollection<NumberGenerated> GeneratedNumbers { get; private set; }
 
         public ObservableCollection<Contacts> ContactsList { get; set; }
+        public ObservableCollection<Contacts> SendMessageContactsList { get; private set; }
+        public ObservableCollection<Contacts> InviteGroupContactsList { get; private set; }
 
         public string MessageText { get; set; }
         public bool IsSwitchNumberChecked { get; set; }
@@ -34,6 +36,8 @@ namespace TELEBLASTER_PRO.ViewModels
             LoadedGroups = new ObservableCollection<GroupInfo>();
             GeneratedNumbers = new ObservableCollection<NumberGenerated>();
             ContactsList = new ObservableCollection<Contacts>();
+            SendMessageContactsList = new ObservableCollection<Contacts>();
+            InviteGroupContactsList = new ObservableCollection<Contacts>();
         }
     }
 }
