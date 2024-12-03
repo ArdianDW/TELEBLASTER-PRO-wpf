@@ -5,12 +5,17 @@ from telethon.tl.functions.contacts import ImportContactsRequest
 from telethon.tl.functions.contacts import GetContactsRequest
 from telethon.tl.types import InputPeerUser
 from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError
+import os
 
 api_id = 26405027
 api_hash = '4f40be06c1b180ce5484658e93cf10c3'
 
+def get_db_path():
+    app_data_path = os.environ['LOCALAPPDATA']
+    return os.path.join(app_data_path, "TELEBLASTER_PRO", "teleblaster.db")
+
 def get_highest_session_name():
-    conn = sqlite3.connect('teleblaster.db')  
+    conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     cursor.execute("SELECT session_name FROM user_sessions WHERE session_name LIKE 'user%.session'")
     sessions = cursor.fetchall()
@@ -49,7 +54,7 @@ async def main():
 
 def save_user_data(me, session_name):
     try:
-        connection = sqlite3.connect('teleblaster.db', timeout=10)
+        connection = sqlite3.connect(get_db_path(), timeout=10)
         cursor = connection.cursor()
         
         cursor.execute('''
