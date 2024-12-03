@@ -67,6 +67,10 @@
                         <Button Content="Import Number" Width="90" Height="30" Style="{StaticResource FeatureButtonStyles}"/>
                         <Button Content="Export Valid Number" Width="120" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}"/>
                         <Button Content="Clear" Width="60" Height="30" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}"/>
+                        <StackPanel Orientation="Horizontal" x:Name="ValidateStatusBar" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <controls:DonutSpinner  Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                            <TextBlock Text="Validating numbers..." VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <DataGrid x:Name="NumbersDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*"

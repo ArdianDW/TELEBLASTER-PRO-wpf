@@ -14,6 +14,7 @@ namespace TELEBLASTER_PRO.ViewModels
     internal class NumberGeneratorViewModel : INotifyPropertyChanged
     {
         private int _addValue;
+        private bool _isLoading;
 
         public string PrefixName
         {
@@ -59,10 +60,20 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand GenerateCommand { get; }
         public ICommand ValidateCommand { get; }
 
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged();
+            }
+        }
+
         public NumberGeneratorViewModel()
         {
             GenerateCommand = new RelayCommand(_ => GenerateNumbers());
-            ValidateCommand = new RelayCommand(async _ => await ValidateNumbersAsync());
+            ValidateCommand = new RelayCommand(_ => Task.Run(() => ValidateNumbersAsync()));
         }
 
         private void GenerateNumbers()
@@ -105,60 +116,99 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             var activeAccounts = GetActiveAccounts().ToList();
             int accountIndex = 0;
-            int numbersPerAccount = 5;
+            int numbersPerAccount = 3;
             var random = new Random();
 
-            using (Py.GIL())
+            bool allNumbersValidated = false;
+            while (!allNumbersValidated)
             {
-                dynamic functions = Py.Import("functions");
-                for (int i = 0; i < GeneratedNumbers.Count; i++)
+                try
                 {
-                    var number = GeneratedNumbers[i];
-                    string currentSession = activeAccounts[accountIndex].SessionName; 
-
-                    Debug.WriteLine($"Validating phone number: {number.PhoneNumber} using session: {currentSession}");
-
-                    var result = functions.validate_phone_number(currentSession, number.PhoneNumber);
-                    bool isValid = result[0].As<bool>();
-                    if (isValid)
+                    App.Current.Dispatcher.Invoke(() =>
                     {
-                        dynamic userInfo = result[1];
-                        number.UserId = userInfo["user_id"].As<long>().ToString();
-                        number.AccessHash = userInfo["access_hash"].As<long>().ToString();
-                        number.Username = userInfo["username"].As<string>();
-                        number.Status = "Valid";
+                        IsLoading = true; // Menampilkan ValidateStatusBar
+                    });
 
-                        Debug.WriteLine($"Phone number {number.PhoneNumber} is valid. User ID: {number.UserId}, Username: {number.Username}");
+                    using (Py.GIL())
+                    {
+                        dynamic functions = Py.Import("functions");
+                        for (int i = 0; i < GeneratedNumbers.Count; i++)
+                        {
+                            var number = GeneratedNumbers[i];
+                            string currentSession = activeAccounts[accountIndex].SessionName;
+
+                            Debug.WriteLine($"Validating phone number: {number.PhoneNumber} using session: {currentSession}");
+
+                            var result = functions.validate_phone_number_sync(currentSession, number.PhoneNumber);
+                            bool isValid = result[0].As<bool>();
+                            dynamic userInfo = result[1];
+
+                            // Logging hasil dari Python
+                            Debug.WriteLine($"Validation result for {number.PhoneNumber}: isValid={isValid}, userInfo={userInfo}");
+
+                            if (isValid)
+                            {
+                                number.UserId = userInfo["user_id"].As<long>().ToString();
+                                number.AccessHash = userInfo["access_hash"].As<long>().ToString();
+                                number.Username = userInfo["username"].As<string>();
+                                number.Status = "Valid";
+
+                                Debug.WriteLine($"Phone number {number.PhoneNumber} is valid. User ID: {number.UserId}, Username: {number.Username}");
+                            }
+                            else
+                            {
+                                number.Status = "Invalid";
+                                number.UserId = string.Empty;
+                                number.AccessHash = string.Empty;
+                                number.Username = string.Empty;
+
+                                Debug.WriteLine($"Phone number {number.PhoneNumber} is not valid.");
+                            }
+
+                            App.Current.Dispatcher.Invoke(() =>
+                            {
+                                OnPropertyChanged(nameof(GeneratedNumbers));
+                            });
+
+                            int delay = random.Next(1, 2) * 1000;
+                            await Task.Delay(delay);
+
+                            if ((i + 1) % numbersPerAccount == 0)
+                            {
+                                accountIndex = (accountIndex + 1) % activeAccounts.Count;
+                            }
+                        }
+                    }
+
+                    allNumbersValidated = true; // Semua nomor berhasil divalidasi
+                }
+                catch (PythonException pe)
+                {
+                    if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                    {
+                        Debug.WriteLine("Retrying due to Python error: " + pe.Message);
+                        await Task.Delay(1000); // Wait before retrying
+                        continue; // Retry the validation process
                     }
                     else
                     {
-                        number.Status = "Not Valid";
-
-                        Debug.WriteLine($"Phone number {number.PhoneNumber} is not valid.");
-                    }
-
-                    App.Current.Dispatcher.Invoke(() =>
-                    {
-                        OnPropertyChanged(nameof(number.UserId));
-                        OnPropertyChanged(nameof(number.AccessHash));
-                        OnPropertyChanged(nameof(number.Username));
-                        OnPropertyChanged(nameof(number.Status));
-                    });
-
-                    int delay = random.Next(1, 2) * 1000; 
-                    await Task.Delay(delay);
-
-                    if ((i + 1) % numbersPerAccount == 0)
-                    {
-                        accountIndex = (accountIndex + 1) % activeAccounts.Count;
+                        Debug.WriteLine($"Python error during number validation: {pe.Message}");
+                        break; // Exit loop if it's a different Python error
                     }
                 }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error during number validation: {ex.Message}");
+                    break; // Exit loop on other exceptions
+                }
+                finally
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        IsLoading = false; // Menyembunyikan ValidateStatusBar
+                    });
+                }
             }
-
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                OnPropertyChanged(nameof(GeneratedNumbers));
-            });
         }
 
         private IEnumerable<Account> GetActiveAccounts()
