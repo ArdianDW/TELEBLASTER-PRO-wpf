@@ -87,20 +87,28 @@
                         <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Member List" 
-                       HorizontalAlignment="Left" 
-                       VerticalAlignment="Center" 
-                       FontFamily="Century Gothic" 
-                       FontSize="20" 
-                       FontWeight="Bold" 
-                       Grid.Row="0" 
-                       Margin="10,0,0,0" Height="30" Width="Auto"/>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Member List" 
+                           HorizontalAlignment="Left" 
+                           VerticalAlignment="Center" 
+                           FontFamily="Century Gothic" 
+                           FontSize="20" 
+                           FontWeight="Bold" 
+                           Grid.Column="0" 
+                           Margin="10,0,0,0" Height="30" Width="Auto"/>
+                        <TextBlock Text="{Binding TotalMembers, StringFormat='Total Members : {0}'}"  VerticalAlignment="Bottom" Margin="0,0,15,5" FontSize="12" FontWeight="SemiBold" Grid.Column="2"/>
+                    </Grid>
 
                     <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="15,0,0,0">
                         <Button Content="Export Member" Width="95" Height="30" Style="{StaticResource FeatureButtonStyles}" Command="{Binding ExportMembersCommand}"/>
-                        <Button Content="Clear" Width="60" Height="30" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}"/>
+                        <Button Content="Clear" Width="60" Height="30" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" Command="{Binding ClearMembersCommand}"/>
                     </StackPanel>
 
                     <DataGrid x:Name="MembersDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*"

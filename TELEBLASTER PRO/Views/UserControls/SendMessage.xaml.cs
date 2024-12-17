@@ -26,7 +26,11 @@ namespace TELEBLASTER_PRO.Views.UserControls
         public SendMessage()
         {
             InitializeComponent();
-            DataContext = new SendMessageViewModel(new AccountViewModel());
+            var viewModel = new SendMessageViewModel(new AccountViewModel());
+            DataContext = viewModel;
+            System.Diagnostics.Debug.WriteLine($"DataContext is set to: {DataContext.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"IsCheckedAll initial value: {viewModel.IsCheckedAll}");
         }
+
     }
 }

@@ -19,6 +19,7 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand ExportContactsCommand { get; }
         public ICommand StartInviteCommand { get; }
         public ICommand StopInviteCommand { get; }
+        public ICommand ClearContactsCommand { get; }
 
         public ObservableCollection<Contacts> ContactsList => ExtractedDataStore.Instance.InviteGroupContactsList;
         public ObservableCollection<string> ActivePhoneNumbers { get; set; }
@@ -104,6 +105,7 @@ namespace TELEBLASTER_PRO.ViewModels
             ExportContactsCommand = new RelayCommand(_ => ExportContacts());
             StartInviteCommand = new RelayCommand(_ => StartInvite(), _ => !IsInviting);
             StopInviteCommand = new RelayCommand(_ => StopInvite(), _ => IsInviting);
+            ClearContactsCommand = new RelayCommand(_ => ClearContacts());
 
             // Initialize ActivePhoneNumbers
             var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active");
@@ -402,6 +404,20 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             var account = Account.GetAccountsFromDatabase().FirstOrDefault(a => a.Phone == phoneNumber);
             return account?.SessionName; // Assuming Account has a SessionName property
+        }
+
+        private void ClearContacts()
+        {
+            var result = MessageBox.Show(
+                "Are you sure you want to clear all contacts?",
+                "Clear Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                ContactsList.Clear();
+            }
         }
     }
 }

@@ -8,6 +8,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\Assets\Images\teleblaster-icon.ico</ApplicationIcon>
+	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	  <SelfContained>true</SelfContained>
+	  <PublishSingleFile>true</PublishSingleFile>
+	  <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +25,7 @@
   <ItemGroup>
     <None Remove="Resources\Assets\Images\accounts.png" />
     <None Remove="Resources\Assets\Images\community.png" />
+    <None Remove="Resources\Assets\Images\delete.png" />
     <None Remove="Resources\Assets\Images\group.png" />
     <None Remove="Resources\Assets\Images\help-center.png" />
     <None Remove="Resources\Assets\Images\invite.png" />
@@ -38,14 +44,17 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="pythonnet" Version="3.0.4" />
     <PackageReference Include="SQLite" Version="3.13.0" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
+    <PackageReference Include="System.Management" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Resources\Assets\Images\accounts.png" />
     <Resource Include="Resources\Assets\Images\community.png" />
+    <Resource Include="Resources\Assets\Images\delete.png" />
     <Resource Include="Resources\Assets\Images\help-center.png" />
     <Resource Include="Resources\Assets\Images\teleblaster-icon.ico" />
     <Resource Include="Resources\Assets\Images\invite.png" />

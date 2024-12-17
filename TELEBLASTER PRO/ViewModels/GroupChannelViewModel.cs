@@ -27,11 +27,13 @@ namespace TELEBLASTER_PRO.ViewModels
         private int _extractedMembersCount;
         private GroupInfo _selectedGroup;
         private ObservableCollection<GroupMember> _extractedMembers;
+        private int _totalMembers;
 
         public ICommand LoadGroupsCommand { get; }
         public ICommand ExtractMembersCommand { get; }
         public ICommand StopExtractionCommand { get; }
         public ICommand ExportMembersCommand { get; }
+        public ICommand ClearMembersCommand { get; }
         public ObservableCollection<string> ActivePhoneNumbers { get; }
         public ObservableCollection<GroupInfo> LoadedGroups
         {
@@ -104,6 +106,17 @@ namespace TELEBLASTER_PRO.ViewModels
             {
                 _extractedMembers = value;
                 OnPropertyChanged(nameof(ExtractedMembers));
+                TotalMembers = _extractedMembers.Count;
+            }
+        }
+        public int TotalMembers
+        {
+            get => _totalMembers;
+            set
+            {
+                _totalMembers = value;
+                System.Diagnostics.Debug.WriteLine($"TotalMembers updated to: {_totalMembers}");
+                OnPropertyChanged(nameof(TotalMembers));
             }
         }
 
@@ -114,6 +127,7 @@ namespace TELEBLASTER_PRO.ViewModels
             ExtractMembersCommand = new RelayCommand(async _ => await StartExtractingMembersAsync(), CanExecuteExtractMembers);
             StopExtractionCommand = new RelayCommand(_ => StopExtraction(), CanExecuteStopExtraction);
             ExportMembersCommand = new RelayCommand(_ => ExportMembers());
+            ClearMembersCommand = new RelayCommand(_ => ClearMembers());
             ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
             LoadedGroups = ExtractedDataStore.Instance.LoadedGroups;
             ExtractedMembers = ExtractedDataStore.Instance.ExtractedMembers;
@@ -358,26 +372,28 @@ namespace TELEBLASTER_PRO.ViewModels
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         ExtractedDataStore.Instance.ExtractedMembers.Clear();
-                        int no = 1; // Mulai dari 1
+                        int no = 1;
                         foreach (var member in extractedMembers)
                         {
                             long memberId;
                             if (!long.TryParse(member.MemberId, out memberId))
                             {
                                 System.Diagnostics.Debug.WriteLine($"Error: MemberId '{member.MemberId}' is not a valid long.");
-                                continue; // Skip this member if conversion fails
+                                continue;
                             }
 
                             ExtractedDataStore.Instance.ExtractedMembers.Add(new GroupMember
                             {
-                                No = no++, // Set nomor urut
-                                MemberId = memberId, // Use the converted long value
+                                No = no++,
+                                MemberId = memberId,
                                 AccessHash = member.AccessHash,
                                 FirstName = member.FirstName,
                                 LastName = member.LastName,
                                 Username = member.UserName
                             });
                         }
+                        TotalMembers = ExtractedMembers.Count;
+                        System.Diagnostics.Debug.WriteLine($"TotalMembers after extraction: {TotalMembers}");
                     });
                 }
             }
@@ -420,6 +436,9 @@ namespace TELEBLASTER_PRO.ViewModels
                 dynamic py = Py.Import("functions");
                 py.stop_extraction_sync();
             }
+            
+                TotalMembers = ExtractedMembers.Count;
+                System.Diagnostics.Debug.WriteLine($"TotalMembers after stopping extraction: {TotalMembers}");
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -485,6 +504,21 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     MessageBox.Show($"Error exporting members: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+        }
+
+        private void ClearMembers()
+        {
+            var result = MessageBox.Show(
+                "Are you sure you want to clear all members data?",
+                "Clear Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                ExtractedMembers.Clear();
+                TotalMembers = 0;
             }
         }
     }

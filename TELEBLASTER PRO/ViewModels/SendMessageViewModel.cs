@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using TELEBLASTER_PRO.Helpers;
 using ClosedXML.Excel;
 using TELEBLASTER_PRO.ViewModels;
+using System.Text.RegularExpressions;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -88,6 +89,7 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand SendMessageCommand { get; }
         public ICommand ExportContactsCommand { get; }
         public ICommand ImportContactsCommand { get; }
+        public ICommand ClearContactsCommand { get; }
 
         private string _attachmentFilePath;
         public string AttachmentFilePath
@@ -124,15 +126,83 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        private bool _isCheckedAll;
+        public bool IsCheckedAll
+        {
+            get => _isCheckedAll;
+            set
+            {
+                if (_isCheckedAll != value)
+                {
+                    _isCheckedAll = value;
+                    System.Diagnostics.Debug.WriteLine($"IsCheckedAll changed to: {_isCheckedAll}");
+                    OnPropertyChanged(nameof(IsCheckedAll));
+                    UpdateAllCheckBoxes(value);
+                }
+            }
+        }
+
+        private static readonly Random _random = new Random();
+
+        private int _totalContacts;
+        public int TotalContacts
+        {
+            get => _totalContacts;
+            set
+            {
+                _totalContacts = value;
+                OnPropertyChanged(nameof(TotalContacts));
+            }
+        }
+
+        private int _totalTarget;
+        public int TotalTarget
+        {
+            get => _totalTarget;
+            set
+            {
+                _totalTarget = value;
+                OnPropertyChanged(nameof(TotalTarget));
+            }
+        }
+
+        private int _successCount;
+        public int SuccessCount
+        {
+            get => _successCount;
+            set
+            {
+                _successCount = value;
+                OnPropertyChanged(nameof(SuccessCount));
+            }
+        }
+
+        private int _failCount;
+        public int FailCount
+        {
+            get => _failCount;
+            set
+            {
+                _failCount = value;
+                OnPropertyChanged(nameof(FailCount));
+            }
+        }
+
         public SendMessageViewModel(AccountViewModel accountViewModel)
         {
             _accountViewModel = accountViewModel;
             ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
             ExtractContactsCommand = new RelayCommand(_ => ExtractContacts());
-            BrowseFileCommand = new RelayCommand(_ => BrowseFile());
+            BrowseFileCommand = new RelayCommand(BrowseFile);
             ExportContactsCommand = new RelayCommand(_ => ExportContacts());
             ImportContactsCommand = new RelayCommand(_ => ImportContacts());
             SendMessageCommand = new RelayCommand(_ => SendMessage());
+            ClearContactsCommand = new RelayCommand(_ => ClearContacts());
+
+            // Initialize counts
+            TotalContacts = ContactsList.Count;
+            SuccessCount = 0;
+            FailCount = 0;
         }
 
         public IEnumerable<Account> GetActiveAccounts()
@@ -140,7 +210,7 @@ namespace TELEBLASTER_PRO.ViewModels
             return _accountViewModel.GetActiveAccounts();
         }
 
-        private void ExtractContacts()
+        public void ExtractContacts()
         {
             if (string.IsNullOrEmpty(SelectedPhoneNumber))
             {
@@ -157,6 +227,10 @@ namespace TELEBLASTER_PRO.ViewModels
             }
 
             LoadContactsFromDatabase();
+
+            // Setelah ekstraksi selesai, perbarui TotalContacts
+            TotalContacts = ContactsList.Count;
+            ResetData();
         }
 
         private string GetSessionNameFromPhoneNumber(string phoneNumber)
@@ -176,13 +250,12 @@ namespace TELEBLASTER_PRO.ViewModels
                 }
         }
 
-        private void BrowseFile()
+        private void BrowseFile(object parameter)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
             {
                 AttachmentFilePath = openFileDialog.FileName;
-                Debug.WriteLine($"Selected file: {AttachmentFilePath}");
             }
         }
 
@@ -239,7 +312,7 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        private void ImportContacts()
+        public void ImportContacts()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
@@ -295,6 +368,10 @@ namespace TELEBLASTER_PRO.ViewModels
                     MessageBox.Show($"Error importing contacts: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+
+            // Setelah impor selesai, perbarui TotalContacts
+            TotalContacts = ContactsList.Count;
+            ResetData();
         }
 
         public void SendMessage()
@@ -302,18 +379,24 @@ namespace TELEBLASTER_PRO.ViewModels
             Task.Run(() =>
             {
                 bool allMessagesSent = false;
+                TotalTarget = ContactsList.Count(c => c.IsChecked); // Update total target
+
                 while (!allMessagesSent)
                 {
                     try
                     {
                         IsSending = true; // Mulai pengiriman
                         var recipientIds = ContactsList.Where(c => c.IsChecked).Select(c => c.ContactId).ToList();
+                        var recipientUsernames = ContactsList.Where(c => c.IsChecked).Select(c => c.UserName).ToList();
                         int minDelay = MinDelay;
                         int maxDelay = MaxDelay;
                         int messagesPerNumber = MessagesPerNumber;
 
-                        Debug.WriteLine($"Message Text: {CustomTextBoxText}");
+                        string messageText = CustomTextBoxText; // Tidak perlu memproses Spintax di sini
+
+                        Debug.WriteLine($"Message Text: {messageText}");
                         Debug.WriteLine("Recipient IDs: " + string.Join(", ", recipientIds));
+                        Debug.WriteLine("Recipient Usernames: " + string.Join(", ", recipientUsernames));
                         Debug.WriteLine($"Min Delay: {minDelay}, Max Delay: {maxDelay}");
                         Debug.WriteLine($"Messages Per Number: {messagesPerNumber}");
                         Debug.WriteLine($"Attachment File Path: {AttachmentFilePath}");
@@ -328,9 +411,10 @@ namespace TELEBLASTER_PRO.ViewModels
                             for (int i = 0; i < totalRecipients; i += messagesPerNumber)
                             {
                                 var sessionName = activeAccounts[accountIndex].SessionName;
-                                var batchRecipients = recipientIds.Skip(i).Take(messagesPerNumber).ToList();
+                                var batchRecipientIds = recipientIds.Skip(i).Take(messagesPerNumber).ToList();
+                                var batchRecipientUsernames = recipientUsernames.Skip(i).Take(messagesPerNumber).ToList();
 
-                                foreach (var recipientId in batchRecipients)
+                                foreach (var recipientId in batchRecipientIds)
                                 {
                                     var contact = ContactsList.FirstOrDefault(c => c.ContactId == recipientId);
                                     CurrentRecipientName = contact?.FirstName ?? "Unknown";
@@ -340,11 +424,24 @@ namespace TELEBLASTER_PRO.ViewModels
                                     using (Py.GIL())
                                     {
                                         dynamic py = Py.Import("functions");
-                                        var result = py.send_message(sessionName, CustomTextBoxText, new List<string> { recipientId }, minDelay, maxDelay, AttachmentFilePath);
+                                        var result = py.send_message(sessionName, messageText, batchRecipientIds, batchRecipientUsernames, minDelay, maxDelay, AttachmentFilePath);
                                         bool success = result[0];
                                         string message = result[1];
 
+                                        Debug.WriteLine($"Send message result for {recipientId} (Username: {contact?.UserName}): Success = {success}, Message = {message}");
+
                                         contact.Status = success ? "Success" : "Failed";
+                                        if (success)
+                                        {
+                                            SuccessCount++;
+                                        }
+                                        else
+                                        {
+                                            FailCount++;
+                                        }
+
+                                        // Debugging the return result from Python function
+                                        Debug.WriteLine($"Python function return: Success = {success}, Message = {message}");
                                     }
                                 }
 
@@ -364,11 +461,24 @@ namespace TELEBLASTER_PRO.ViewModels
                                 using (Py.GIL())
                                 {
                                     dynamic py = Py.Import("functions");
-                                    var result = py.send_message(sessionName, CustomTextBoxText, new List<string> { recipientId }, minDelay, maxDelay, AttachmentFilePath);
+                                    var result = py.send_message(sessionName, messageText, recipientIds, recipientUsernames, minDelay, maxDelay, AttachmentFilePath);
                                     bool success = result[0];
                                     string message = result[1];
 
+                                    Debug.WriteLine($"Send message result for {recipientId} (Username: {contact?.UserName}): Success = {success}, Message = {message}");
+
                                     contact.Status = success ? "Success" : "Failed";
+                                    if (success)
+                                    {
+                                        SuccessCount++;
+                                    }
+                                    else
+                                    {
+                                        FailCount++;
+                                    }
+
+                                    // Debugging the return result from Python function
+                                    Debug.WriteLine($"Python function return: Success = {success}, Message = {message}");
                                 }
                             }
                         }
@@ -382,7 +492,7 @@ namespace TELEBLASTER_PRO.ViewModels
                             Debug.WriteLine("Retrying due to Python error: " + pe.Message);
                             Task.Delay(1000).Wait(); // Wait before retrying
                             Task.Run(() => SendMessage()); // Start a new task to retry
-                            return; // Exit current task
+                            return;
                         }
                         else
                         {
@@ -401,6 +511,37 @@ namespace TELEBLASTER_PRO.ViewModels
                     }
                 }
             });
+        }
+
+        private void UpdateAllCheckBoxes(bool isChecked)
+        {
+            foreach (var contact in ContactsList)
+            {
+                contact.IsChecked = isChecked;
+            }
+        }
+
+        private void ClearContacts()
+        {
+            var result = MessageBox.Show(
+                "Are you sure you want to clear all contacts?",
+                "Clear Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                ContactsList.Clear();
+                ResetData();
+                TotalContacts = 0;
+            }
+        }
+
+        private void ResetData()
+        {
+            TotalTarget = 0;
+            SuccessCount = 0;
+            FailCount = 0;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

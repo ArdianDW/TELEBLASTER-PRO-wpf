@@ -8,6 +8,7 @@ using TELEBLASTER_PRO.Models;
 using Python.Runtime;
 using System.Diagnostics;
 using TELEBLASTER_PRO.Helpers;
+using System.Windows;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -59,6 +60,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
         public ICommand GenerateCommand { get; }
         public ICommand ValidateCommand { get; }
+        public ICommand ClearNumbersCommand { get; }
 
         public bool IsLoading
         {
@@ -74,6 +76,7 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             GenerateCommand = new RelayCommand(_ => GenerateNumbers());
             ValidateCommand = new RelayCommand(_ => Task.Run(() => ValidateNumbersAsync()));
+            ClearNumbersCommand = new RelayCommand(_ => ClearNumbers());
         }
 
         private void GenerateNumbers()
@@ -214,6 +217,20 @@ namespace TELEBLASTER_PRO.ViewModels
         private IEnumerable<Account> GetActiveAccounts()
         {
             return Account.GetAccountsFromDatabase().Where(account => account.Status == "Active");
+        }
+
+        private void ClearNumbers()
+        {
+            var result = MessageBox.Show(
+                "Are you sure you want to clear all generated numbers?",
+                "Clear Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                GeneratedNumbers.Clear();
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

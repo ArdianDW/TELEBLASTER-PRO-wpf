@@ -74,22 +74,27 @@ def automate_group_finding(keyword, pages, is_headless=True):
                 scrape_links()
             except Exception as e:
                 print(f"Failed to navigate to the next page: {e}")
-                break
-        
+                return "Failed to navigate to the next page"
+
         save_to_database(group_links)
         
         for telegram_link in group_links:
             print(telegram_link)
+        
+        return "Scraping completed successfully"
     except Exception as e:
         print(f"An error occurred: {e}")
+        return f"An error occurred: {e}"
     finally:
         # Close browser
         if driver is not None:
             try:
                 driver.quit()
                 print("Browser closed successfully.")
+                return "Browser closed successfully"
             except Exception as e:
                 print(f"Failed to close browser: {e}")
+                return f"Failed to close browser: {e}"
 
 def clear_database():
     try:

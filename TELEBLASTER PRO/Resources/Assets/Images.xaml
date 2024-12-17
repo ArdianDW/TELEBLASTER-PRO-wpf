@@ -1,15 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <BitmapImage x:Key="logo-apk" UriSource="pack://application:,,,/Resources/Assets/Images/logo-teleblaster.png"/>
-    <BitmapImage x:Key="icon-accounts" UriSource="pack://application:,,,/Resources/Assets/Images/accounts.png"/>
-    <BitmapImage x:Key="icon-send" UriSource="pack://application:,,,/Resources/Assets/Images/send-button.png"/>
-    <BitmapImage x:Key="icon-setting" UriSource="pack://application:,,,/Resources/Assets/Images/settings.png"/>
     <BitmapImage x:Key="icon-help" UriSource="pack://application:,,,/Resources/Assets/Images/help-center.png"/>
     <BitmapImage x:Key="icon-community" UriSource="pack://application:,,,/Resources/Assets/Images/community.png"/>
-    <BitmapImage x:Key="icon-search" UriSource="pack://application:,,,/Resources/Assets/Images/search.png"/>
-    <BitmapImage x:Key="icon-invite" UriSource="pack://application:,,,/Resources/Assets/Images/invite.png"/>
-    <BitmapImage x:Key="icon-number" UriSource="pack://application:,,,/Resources/Assets/Images/number.png"/>
-    <BitmapImage x:Key="icon-group" UriSource="pack://application:,,,/Resources/Assets/Images/group.png"/>
-
-
+    <BitmapImage x:Key="icon-delete" UriSource="pack://application:,,,/Resources/Assets/Images/delete.png"/>
 </ResourceDictionary>

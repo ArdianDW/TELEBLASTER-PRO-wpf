@@ -57,5 +57,15 @@ namespace TELEBLASTER_PRO.Models
                 command.Parameters.AddWithValue("@id", Id);
                 command.ExecuteNonQuery();
         }
+
+        public static void DeleteAccountFromDatabase(Account account)
+        {
+            var connection = DatabaseConnection.Instance;
+            using (var command = new SQLiteCommand("DELETE FROM user_sessions WHERE id = @id", connection))
+            {
+                command.Parameters.AddWithValue("@id", account.Id);
+                command.ExecuteNonQuery();
+            }
+        }
     }
 }

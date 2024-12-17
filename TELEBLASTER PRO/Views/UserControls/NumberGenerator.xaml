@@ -52,21 +52,29 @@
                         <RowDefinition Height="40"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Number List" 
-                       HorizontalAlignment="Left" 
-                       VerticalAlignment="Center" 
-                       FontFamily="Century Gothic" 
-                       FontSize="20" 
-                       FontWeight="Bold" 
-                       Grid.Row="0" 
-                       Margin="10,0,0,0" Height="30" Width="Auto"/>
+                    <Grid Grid.Row="0" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Number List" 
+                           HorizontalAlignment="Left" 
+                           VerticalAlignment="Center" 
+                           FontFamily="Century Gothic" 
+                           Grid.Column="0"
+                           FontSize="20" 
+                           FontWeight="Bold" 
+                           Margin="10,0,0,0" Height="30" Width="Auto"/>
+                        <TextBlock Text="Total Numbers : 0 Numbers Valid : 0" VerticalAlignment="Bottom" Margin="0,0,15,10" FontSize="12" FontWeight="SemiBold" Grid.Column="2"/>
+                    </Grid>
 
                     <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="15,0,0,0">
                         <Button Content="Import Number" Width="90" Height="30" Style="{StaticResource FeatureButtonStyles}"/>
                         <Button Content="Export Valid Number" Width="120" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}"/>
-                        <Button Content="Clear" Width="60" Height="30" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}"/>
+                        <Button Content="Clear" Width="60" Height="30" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" Command="{Binding ClearNumbersCommand}"/>
                         <StackPanel Orientation="Horizontal" x:Name="ValidateStatusBar" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <controls:DonutSpinner  Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="10,0,0,0"/>
                             <TextBlock Text="Validating numbers..." VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>

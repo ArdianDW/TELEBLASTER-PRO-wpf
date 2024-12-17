@@ -49,8 +49,9 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <Button Content="Emoji Picker" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="15, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                                    <Button Content="Browse" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="0, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                    <Button Content="Browse File" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="0, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"
                                             Command="{Binding BrowseFileCommand}"/>
+                                    <TextBlock Text="{Binding AttachmentFilePath}" VerticalAlignment="Center" Margin="5,0,0,15" FontSize="12" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -124,8 +125,9 @@
                                         <controls:NumericUpDownControl Value="{Binding MaxDelay, UpdateSourceTrigger=PropertyChanged}"
                                                                            Style="{StaticResource NumericUpDownControlStyle}" Width="35"/>
                                         <TextBlock Text="Delay per message" Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                        <Button Content="Send" Width="100" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" HorizontalAlignment="Right"
+                                        <Button Content="Send" Width="70" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" HorizontalAlignment="Right"
                                                 Command="{Binding SendMessageCommand}"/>
+                                        <Button Content="Stop" Width="70" Height="30" Margin="10,0,0,0" Style="{StaticResource WarningButtonStyles}"/>
                                     </StackPanel>
                                 </Grid>
                             </Grid>
@@ -146,6 +148,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Label Content="Contacts" 
                                HorizontalAlignment="Left" 
@@ -159,6 +162,12 @@
                             <StackPanel Orientation="Horizontal" x:Name="SendMessageStatusBar" Visibility="{Binding IsSending, Converter={StaticResource BooleanToVisibilityConverter}}" Grid.Column="1">
                                 <controls:DonutSpinner Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="20,0,0,0"/>
                                 <TextBlock Text="{Binding CurrentRecipientName, StringFormat='Sending to {0}...'}" VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,15,0" Grid.Column="2">
+                                <TextBlock Text="{Binding TotalContacts, StringFormat='Total Data: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding TotalTarget, StringFormat='Total Target: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SuccessCount, StringFormat='Success: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding FailCount, StringFormat='Fail: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold"/>
                             </StackPanel>
                         </Grid>
                         
@@ -178,7 +187,8 @@
                                         Command="{Binding ImportContactsCommand}"/>
                                 <Button Content="Export Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
                                         Command="{Binding ExportContactsCommand}"/>
-                                <Button Content="Clear Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10"/>
+                                <Button Content="Clear Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10"
+                                        Command="{Binding ClearContactsCommand}"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,15,0">
                                 <TextBlock Text="Select index" VerticalAlignment="Center" FontWeight="SemiBold"/>
@@ -200,13 +210,16 @@
                                 <DataGridTemplateColumn Width="*">
                                     <DataGridTemplateColumn.Header>
                                         <StackPanel Orientation="Horizontal">
-                                            <CheckBox x:Name="CheckAll" VerticalAlignment="Center"/>
+                                            <CheckBox x:Name="CheckAll" 
+                                                      VerticalAlignment="Center" 
+                                                      IsChecked="{Binding IsCheckedAll, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"/>
                                             <TextBlock Text="Select All" VerticalAlignment="Center" Margin="5,0,0,0"/>
                                         </StackPanel>
                                     </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" />
+                                            <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
+                                                      Style="{StaticResource CenteredCheckBoxStyle}"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>

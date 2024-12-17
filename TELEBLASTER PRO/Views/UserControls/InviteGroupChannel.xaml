@@ -73,16 +73,24 @@
                     <RowDefinition Height="30"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Contacts" 
+                       HorizontalAlignment="Left" 
+                       VerticalAlignment="Center" 
+                       FontFamily="Century Gothic" 
+                       FontSize="18" 
+                       FontWeight="Bold" 
+                       Grid.Column="0" 
+                       Padding="0,5,0,0"
+                       Margin="15,0,0,0" Height="30" Width="223"/>
+                    <TextBlock Text="Total Data : 0 Total Target : 0 Success : 0 Fail : 0" VerticalAlignment="Center" Margin="0,0,15,0" FontSize="12" FontWeight="SemiBold" Grid.Column="2"/>
+                </Grid>
 
-                <Label Content="Contacts" 
-                   HorizontalAlignment="Left" 
-                   VerticalAlignment="Center" 
-                   FontFamily="Century Gothic" 
-                   FontSize="18" 
-                   FontWeight="Bold" 
-                   Grid.Row="0" 
-                   Padding="0,5,0,0"
-                   Margin="15,0,0,0" Height="30" Width="223"/>
 
                 <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
 
@@ -95,7 +103,7 @@
                         <Button Content="Import Contacts" Width="80" Height="25" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
                                 Command="{Binding ImportContactsCommand}"/>
                         <Button Content="Export Contacts" Width="80" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
-                        <Button Content="Clear Contacts" Width="80" Height="25" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10"/>
+                        <Button Content="Clear Contacts" Width="80" Height="25" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10" Command="{Binding ClearContactsCommand}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,15,0">
                         <TextBlock Text="Select index" VerticalAlignment="Center" FontWeight="SemiBold"/>
@@ -117,13 +125,16 @@
                         <DataGridTemplateColumn Width="*">
                             <DataGridTemplateColumn.Header>
                                 <StackPanel Orientation="Horizontal">
-                                    <CheckBox x:Name="CheckAll" VerticalAlignment="Center"/>
+                                    <CheckBox x:Name="CheckAll" 
+                                              VerticalAlignment="Center"
+                                              IsChecked="{Binding IsCheckedAll, Mode=TwoWay}"/>
                                     <TextBlock Text="Select All" VerticalAlignment="Center" Margin="5,0,0,0"/>
                                 </StackPanel>
                             </DataGridTemplateColumn.Header>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" />
+                                    <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}"
+                                              Style="{StaticResource CenteredCheckBoxStyle}"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

@@ -453,23 +453,48 @@ async def invite_members(session_name, group_link, member_ids, min_delay, max_de
 def invite_members_sync(session_name, group_link, member_ids, min_delay, max_delay):
     return asyncio.run(invite_members(session_name, group_link, member_ids, min_delay, max_delay))
 
-async def send_message_async(session_name, message_text, recipient_ids, min_delay=3, max_delay=5, attachment_file_path=None):
+def process_spintax(text):
+    pattern = r"\{([^{}]*)\}"
+    while re.search(pattern, text):
+        text = re.sub(pattern, lambda match: random.choice(match.group(1).split('|')), text)
+    return text
+
+async def send_message_async(session_name, message_text, recipient_ids, recipient_usernames, min_delay=3, max_delay=5, attachment_file_path=None):
     client = TelegramClient(session_name, api_id, api_hash)
     await client.start()
 
     try:
-        for recipient_id in recipient_ids:
+        for recipient_id, recipient_username in zip(recipient_ids, recipient_usernames):
             recipient_id = int(recipient_id)
             user = await client.get_input_entity(recipient_id)
 
-            if attachment_file_path:
-                # Send the file with the message
-                await client.send_file(user, attachment_file_path, caption=message_text)
-                print(f"File sent to {recipient_id} with message: {message_text}")
-            else:
-                # Send the message text
-                await client(SendMessageRequest(user, message_text))
-                print(f"Message sent to {recipient_id}")
+            # Process Spintax here for each message
+            processed_message = process_spintax(message_text)
+            print(f"Original message: {message_text}")
+            print(f"Processed message: {processed_message}")
+
+            try:
+                # Try sending the message using recipient ID
+                if attachment_file_path:
+                    await client.send_file(user, attachment_file_path, caption=processed_message)
+                    print(f"File sent to {recipient_id} with message: {processed_message}")
+                else:
+                    await client(SendMessageRequest(user, processed_message))
+                    print(f"Message sent to {recipient_id}")
+            except Exception as e:
+                print(f"Error sending message to ID {recipient_id}: {e}")
+                try:
+                    # If sending by ID fails, try sending by username
+                    username = await client.get_input_entity(recipient_username)
+                    if attachment_file_path:
+                        await client.send_file(username, attachment_file_path, caption=processed_message)
+                        print(f"File sent to {recipient_username} with message: {processed_message}")
+                    else:
+                        await client(SendMessageRequest(username, processed_message))
+                        print(f"Message sent to {recipient_username}")
+                except Exception as e:
+                    print(f"Error sending message to username {recipient_username}: {e}")
+                    return False, f"Error sending message: {str(e)}"
 
             # Random delay between messages
             delay = random.randint(min_delay, max_delay)
@@ -482,8 +507,8 @@ async def send_message_async(session_name, message_text, recipient_ids, min_dela
     finally:
         await client.disconnect()
 
-def send_message(session_name, message_text, recipient_ids, min_delay=3, max_delay=5, attachment_file_path=None):
-    return asyncio.run(send_message_async(session_name, message_text, recipient_ids, min_delay, max_delay, attachment_file_path))
+def send_message(session_name, message_text, recipient_ids, recipient_usernames, min_delay=3, max_delay=5, attachment_file_path=None):
+    return asyncio.run(send_message_async(session_name, message_text, recipient_ids, recipient_usernames, min_delay, max_delay, attachment_file_path))
 
 def logout_and_delete_session_sync(session_name):
     client = TelegramClient(session_name, api_id, api_hash)

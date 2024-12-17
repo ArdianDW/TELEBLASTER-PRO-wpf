@@ -26,5 +26,10 @@ namespace TELEBLASTER_PRO.Views.UserControls
             InitializeComponent();
             DataContext = new GroupChannelViewModel(new AccountViewModel());
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

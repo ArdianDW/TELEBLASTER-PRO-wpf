@@ -11,6 +11,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using TELEBLASTER_PRO.Views.UserControls;
 using Python.Runtime;
+using System.Diagnostics;
 
 namespace TELEBLASTER_PRO
 {
@@ -25,7 +26,18 @@ namespace TELEBLASTER_PRO
             InitializePython();
             this.SizeChanged += MainWindow_SizeChanged;
             
-            MainContentControl.Content = new Accounts();
+            if (!IsLicenseValid())
+            {
+                ShowLicenseActivation();
+            }
+            else
+            {
+                MainContentControl.Content = new Accounts();
+            }
+
+            // Tambahkan event handler untuk tombol Help dan Community
+            HelpButton.Click += HelpButton_Click;
+            CommunityButton.Click += CommunityButton_Click;
         }
 
         private void InitializePython()
@@ -43,11 +55,10 @@ namespace TELEBLASTER_PRO
                 PythonEngine.Initialize();
                 PythonEngine.BeginAllowThreads();
 
-                MessageBox.Show("Python berhasil diinisialisasi");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Gagal menginisialisasi Python: {ex.Message}");
+                MessageBox.Show($"Error Python: {ex.Message}");
             }
         }
 
@@ -60,6 +71,7 @@ namespace TELEBLASTER_PRO
                 Sidebar.Visibility = Visibility.Visible;
                 HamburgerButton.Visibility = Visibility.Collapsed;
                 Sidebar.SetValue(Grid.ColumnSpanProperty, 1);
+                MainOverlay.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -67,6 +79,7 @@ namespace TELEBLASTER_PRO
                 Sidebar.Visibility = Visibility.Collapsed;
                 HamburgerButton.Visibility = Visibility.Visible;
                 HamburgerButton.Content = "☰"; 
+                MainOverlay.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -77,12 +90,14 @@ namespace TELEBLASTER_PRO
                 StartAnimation("HamburgerAnimation");
                 Sidebar.Visibility = Visibility.Collapsed;
                 HamburgerButton.Content = "☰";
+                MainOverlay.Visibility = Visibility.Collapsed;
             }
             else
             {
                 StartAnimation("SidebarAnimation");
                 Sidebar.Visibility = Visibility.Visible;
                 HamburgerButton.Content = "✖";
+                MainOverlay.Visibility = Visibility.Visible;
             }
         }
 
@@ -90,6 +105,54 @@ namespace TELEBLASTER_PRO
         {
             var storyboard = (Storyboard)FindResource(animationKey);
             storyboard.Begin(this);
+        }
+
+        private bool IsLicenseValid()
+        {
+            // Implementasi logika untuk mengecek validitas lisensi
+            // Untuk testing, kita anggap lisensi belum valid
+            return false; // Ganti dengan logika validasi yang sesuai
+        }
+
+        private void ShowLicenseActivation()
+        {
+            // Tampilkan halaman aktivasi lisensi
+            LicenseActivationWindow licenseWindow = new LicenseActivationWindow();
+            licenseWindow.ShowDialog();
+            if (licenseWindow.IsLicenseActivated)
+            {
+                MainContentControl.Content = new Accounts();
+            }
+            else
+            {
+                Application.Current.Shutdown();
+            }
+        }
+
+        private void HelpButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://wa.me/6281333444233");
+        }
+
+        private void CommunityButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://member.jvpartner.id/member");
+        }
+
+        private void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to open link: {ex.Message}");
+            }
         }
     }
 }

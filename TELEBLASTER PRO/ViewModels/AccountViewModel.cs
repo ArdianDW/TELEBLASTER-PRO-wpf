@@ -18,6 +18,8 @@ namespace TELEBLASTER_PRO.ViewModels
         private ObservableCollection<Account> _accounts;
         private Account _selectedAccount;
         private bool _isRefreshing;
+        private int _totalAccounts;
+        private int _totalActiveAccounts;
 
         public ObservableCollection<Account> Accounts
         {
@@ -26,6 +28,7 @@ namespace TELEBLASTER_PRO.ViewModels
             {
                 _accounts = value;
                 OnPropertyChanged();
+                UpdateAccountCounts();
             }
         }
 
@@ -49,10 +52,31 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        public int TotalAccounts
+        {
+            get => _totalAccounts;
+            set
+            {
+                _totalAccounts = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int TotalActiveAccounts
+        {
+            get => _totalActiveAccounts;
+            set
+            {
+                _totalActiveAccounts = value;
+                OnPropertyChanged();
+            }
+        }
+
         public ICommand RefreshCommand { get; }
         public ICommand AddAccountCommand { get; }
         public ICommand LoginCommand { get; }
         public ICommand LogoutCommand { get; }
+        public ICommand DeleteAccountCommand { get; }
 
         public AccountViewModel()
         {
@@ -61,6 +85,7 @@ namespace TELEBLASTER_PRO.ViewModels
             AddAccountCommand = new RelayCommand(AddAccount);
             LoginCommand = new RelayCommand(Login, CanExecuteLogin);
             LogoutCommand = new RelayCommand(Logout, CanExecuteLogout);
+            DeleteAccountCommand = new RelayCommand(DeleteAccount, CanExecuteDelete);
         }
 
         public async Task RefreshAccountsAsync(object parameter)
@@ -89,6 +114,7 @@ namespace TELEBLASTER_PRO.ViewModels
                     {
                         Accounts.Add(account);
                     }
+                    UpdateAccountCounts();
                 });
             }
             catch (Exception ex)
@@ -152,6 +178,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
                 Debug.WriteLine("Finished executing addAccount.py");
                 RefreshAccountsAsync(null);
+                UpdateAccountCounts();
             }
             catch (Exception ex)
             {
@@ -186,6 +213,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
                     Debug.WriteLine("Finished executing login.py");
                     RefreshAccountsAsync(null);
+                    UpdateAccountCounts();
                 }
                 catch (Exception ex)
                 {
@@ -208,7 +236,6 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     try
                     {
-                        // Use Dispatcher to ensure the Python operation runs on the main thread
                         await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
                             using (Py.GIL())
@@ -219,29 +246,33 @@ namespace TELEBLASTER_PRO.ViewModels
                         });
 
                         account.Status = "Inactive";
-                        account.SessionName = string.Empty; 
+                        account.SessionName = string.Empty;
                         account.UpdateStatusInDatabase();
-                        OnPropertyChanged(nameof(Accounts));
 
-                        logoutSuccessful = true; 
+                        OnPropertyChanged(nameof(Accounts));
+                        UpdateAccountCounts();
+
+                        logoutSuccessful = true;
+
+                        await RefreshAccountsAsync(null);
                     }
                     catch (PythonException pe)
                     {
                         if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
                         {
                             Debug.WriteLine("Retrying logout due to Python error: " + pe.Message);
-                            await Task.Delay(1000); // Wait before retrying
+                            await Task.Delay(1000);
                         }
                         else
                         {
                             Debug.WriteLine($"Python error during logout for {account.Username}: {pe.Message}");
-                            break; // Exit loop if it's a different Python error
+                            break;
                         }
                     }
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"Error during logout for {account.Username}: {ex.Message}");
-                        break; // Exit loop on other exceptions
+                        break;
                     }
                 }
             }
@@ -269,6 +300,38 @@ namespace TELEBLASTER_PRO.ViewModels
             return SelectedAccount != null && SelectedAccount.Status == "Active";
         }
 
+        private async void DeleteAccount(object parameter)
+        {
+            if (SelectedAccount != null)
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete this account?",
+                    "Delete Confirmation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    if (SelectedAccount.Status == "Active")
+                    {
+                        await LogoutAccount(SelectedAccount);
+                    }
+
+                    // Remove from database
+                    Account.DeleteAccountFromDatabase(SelectedAccount);
+
+                    // Remove from collection
+                    Accounts.Remove(SelectedAccount);
+                    UpdateAccountCounts();
+                }
+            }
+        }
+
+        private bool CanExecuteDelete(object parameter)
+        {
+            return SelectedAccount != null;
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -281,7 +344,13 @@ namespace TELEBLASTER_PRO.ViewModels
             return !IsRefreshing;
         }
 
-            public IEnumerable<Account> GetActiveAccounts()
+        private void UpdateAccountCounts()
+        {
+            TotalAccounts = Accounts.Count;
+            TotalActiveAccounts = Accounts.Count(account => account.Status == "Active");
+        }
+
+        public IEnumerable<Account> GetActiveAccounts()
         {
             return Accounts.Where(account => account.Status == "Active");
         }

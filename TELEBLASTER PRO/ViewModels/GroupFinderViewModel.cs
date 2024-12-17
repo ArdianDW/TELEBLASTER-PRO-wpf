@@ -250,8 +250,8 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     dynamic groupFinder = Py.Import("groupFinder");
                     Debug.WriteLine("Calling automate_group_finding function...");
-                    driver = groupFinder.automate_group_finding(Keyword, Pages, !IsHeadless);
-                    Debug.WriteLine("Function call completed.");
+                    string result = groupFinder.automate_group_finding(Keyword, Pages, !IsHeadless);
+                    Debug.WriteLine($"Function call completed with result: {result}");
                 }
 
                 Debug.WriteLine("Automation completed successfully.");
@@ -270,8 +270,8 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     try
                     {
-                        driver.quit();
-                        Debug.WriteLine("Browser closed successfully.");
+                        string closeResult = driver.quit();
+                        Debug.WriteLine($"Browser close result: {closeResult}");
                     }
                     catch (Exception ex)
                     {
@@ -304,7 +304,6 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             Debug.WriteLine("FilterLinksAsync started.");
 
-            // Ambil sesi aktif dari database
             var activeSessions = Account.GetAccountsFromDatabase()
                                         .Where(account => account.Status == "Active")
                                         .Select(account => account.SessionName)

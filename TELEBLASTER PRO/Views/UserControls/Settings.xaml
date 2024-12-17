@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TELEBLASTER_PRO.Views.UserControls"
-             xmlns:controls="clr-namespace:TELEBLASTER_PRO.Controls"
+             xmlns:viewModels="clr-namespace:TELEBLASTER_PRO.ViewModels"
              mc:Ignorable="d" 
              d:DesignHeight="545" d:DesignWidth="800">
     <Grid>
@@ -15,17 +15,50 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Label Content="Settings" 
+                <Label Content="License Settings" 
                    HorizontalAlignment="Left" 
                    VerticalAlignment="Center" 
                    FontFamily="Century Gothic" 
                    FontSize="23" 
                    FontWeight="Bold" 
                    Grid.Row="0" 
-                   Margin="15,20,0,0" Height="40" Width="Auto"/>     
+                   Margin="10,20,0,0" Height="40" Width="Auto"/>     
 
                 <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
-                <controls:DonutSpinner  Height="100" Width="100" Margin="10, 0" Duration="0:0:1" SpinnerColor="DodgerBlue" Grid.Row="2"/>
+                <Grid Grid.Row="2" Margin="15,15,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="7*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Email " FontWeight="SemiBold" FontSize="16" Grid.Column="0"/>
+                        <TextBlock Text="{Binding Email, StringFormat=': {0}'}" FontWeight="SemiBold" FontSize="16" Grid.Column="1"/>
+                    </Grid>
+                    <Grid Grid.Row="1" Margin="0,15,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="7*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="License Key " FontWeight="SemiBold" FontSize="16" Grid.Column="0"/>
+                        <TextBlock Text="{Binding LicenseKey, StringFormat=': {0}'}" FontWeight="SemiBold" FontSize="16" Grid.Column="1"/>
+                    </Grid>
+                    <Grid Grid.Row="2" Margin="0,15,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="7*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="License Expires " FontWeight="SemiBold" FontSize="16" Grid.Column="0"/>
+                        <TextBlock Text="{Binding LicenseExpires, StringFormat=': {0}'}" FontWeight="SemiBold" FontSize="16" Grid.Column="1"/>
+                    </Grid>
+                    <Button x:Name="DeactivateButton" Content="Deactivate License" Width="120" Height="40" Margin="0,15,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="13" HorizontalAlignment="Left" Grid.Row="3" Command="{Binding DeactivateCommand}"/>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

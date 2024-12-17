@@ -99,7 +99,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Image Source="{StaticResource di_SettingsIcon_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBlock Text="Settings" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
+                <TextBlock Text="License Settings" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
             </Grid>
         </Button>
     </Grid>

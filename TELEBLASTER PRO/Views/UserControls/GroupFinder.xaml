@@ -58,14 +58,22 @@
                             <RowDefinition Height="40"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
                         <Label Content="Group &amp; Channel Links" 
                            HorizontalAlignment="Left" 
                            VerticalAlignment="Center" 
                            FontFamily="Century Gothic" 
+                           Grid.Column="0"
                            FontSize="18" 
                            FontWeight="Bold" 
-                           Grid.Row="0" 
                            Margin="10,0,0,0" Height="40" Width="Auto"/>
+                        <TextBlock Text="Total Links : 0 Total Target : 0 Success : 0 Fail : 0" VerticalAlignment="Center" Margin="0,0,15,0" FontSize="12" FontWeight="SemiBold" Grid.Column="2"/>
+                    </Grid>
 
                         <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
 
@@ -98,7 +106,8 @@
                                         </DataGridTemplateColumn.Header>
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <CheckBox IsChecked="{Binding Check, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
+                                                          Style="{StaticResource CenteredCheckBoxStyle}"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
