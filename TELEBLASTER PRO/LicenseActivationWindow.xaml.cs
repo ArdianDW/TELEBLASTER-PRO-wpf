@@ -93,7 +93,7 @@ namespace TELEBLASTER_PRO
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error memvalidasi email: {ex.Message}");
+                    MessageBox.Show($"Error validating email: {ex.Message}");
                     return false;
                 }
             }
@@ -121,9 +121,14 @@ namespace TELEBLASTER_PRO
                     }
                     return false;
                 }
+                catch (HttpRequestException ex)
+                {
+                    MessageBox.Show("Internet connection is not available. Please check your connection and try again.", "Connection Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return false;
+                }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error memvalidasi lisensi: {ex.Message}");
+                    MessageBox.Show($"Error validating license: {ex.Message}");
                     return false;
                 }
             }
@@ -171,7 +176,6 @@ namespace TELEBLASTER_PRO
                 string licenseKey = DatabaseConnection.GetLicenseKeyFromDatabase();
                 string hardwareId = GetHardwareId();
 
-                // Check license first
                 if (!await CheckLicenseAsync(licenseKey))
                 {
                     ShowInputGrid();
@@ -272,42 +276,59 @@ namespace TELEBLASTER_PRO
             mainWindow.Show();
         }
 
-        private async Task<bool> CheckLicenseAsync(string licenseKey)
+        private async Task<bool> CheckLicenseAsync(string licenseKey, int retryCount = 3)
         {
             using (HttpClient client = new HttpClient())
             {
-                try
+                for (int attempt = 0; attempt < retryCount; attempt++)
                 {
-                    string url = $"https://member.jvpartner.id/softsale/api/check-license?key={licenseKey}";
-
-                    HttpResponseMessage response = await client.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
-
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"License check response: {responseBody}");
-
-                    dynamic result = JsonConvert.DeserializeObject(responseBody);
-
-                    if (result.code == "ok")
+                    try
                     {
-                        Debug.WriteLine($"License valid until: {result.license_expires}");
-                        return true;
+                        string url = $"https://member.jvpartner.id/softsale/api/check-license?key={licenseKey}";
+
+                        HttpResponseMessage response = await client.GetAsync(url);
+                        response.EnsureSuccessStatusCode();
+
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        Debug.WriteLine($"License check response: {responseBody}");
+
+                        dynamic result = JsonConvert.DeserializeObject(responseBody);
+
+                        if (result.code == "ok")
+                        {
+                            Debug.WriteLine($"License valid until: {result.license_expires}");
+                            return true;
+                        }
+                        else if (result.code == "license_expired")
+                        {
+                            MessageBox.Show("License expired. Please renew your license.", "License Check", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                        else if (result.code == "license_not_found")
+                        {
+                            MessageBox.Show("License Key not found. Please check your license key.", "License Check", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                        return false;
                     }
-                    else if (result.code == "license_expired")
+                    catch (HttpRequestException ex) when (ex.Message.Contains("No such host is known"))
                     {
-                        MessageBox.Show("License expired. Please renew your license.", "License Check", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("Internet connection error. Please check your connection and try again.", "Connection Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        if (attempt == retryCount - 1)
+                        {
+                            MessageBox.Show("Internet connection error. Close this app and try again.", "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Retrying license check due to internet error...");
+                            await Task.Delay(2000); 
+                        }
                     }
-                    else if (result.code == "license_not_found")
+                    catch (Exception ex)
                     {
-                        MessageBox.Show("License Key not found. Please check your license key.", "License Check", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"Error checking license: {ex.Message}", "License Check", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return false;
                     }
-                    return false;
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error checking license: {ex.Message}", "License Check", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return false;
-                }
+                return false;
             }
         }
     }

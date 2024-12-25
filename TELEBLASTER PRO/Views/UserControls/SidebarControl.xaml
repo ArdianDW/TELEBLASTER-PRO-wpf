@@ -17,6 +17,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -48,6 +49,17 @@
             </Grid>
         </Button>
         <Button Grid.Row="4" Width="200" Height="50" BorderThickness="0" 
+                Style="{StaticResource SidebarButtonStyles}" Click="NavigateToClickToChat">
+            <Grid Width="200" Height="50" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="{StaticResource di_SendMessage_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="Click to Chat" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,77,0" FontSize="14" FontWeight="Bold"/>
+            </Grid>
+        </Button>
+        <Button Grid.Row="5" Width="200" Height="50" BorderThickness="0" 
                 Style="{StaticResource SidebarButtonStyles}" Click="NavigateToGroupChannel">
             <Grid Width="200" Height="50" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
@@ -58,7 +70,7 @@
                 <TextBlock Text="Group &amp; Channel" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
             </Grid>
         </Button>
-        <Button Grid.Row="5" Width="200" Height="50" BorderThickness="0" 
+        <Button Grid.Row="6" Width="200" Height="50" BorderThickness="0" 
                 Style="{StaticResource SidebarButtonStyles}" Click="NavigateToGroupFinder">
             <Grid Width="200" Height="50" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
@@ -69,7 +81,7 @@
                 <TextBlock Text="Group Finder" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
             </Grid>
         </Button>
-        <Button Grid.Row="6" Width="200" Height="50" BorderThickness="0" 
+        <Button Grid.Row="7" Width="200" Height="50" BorderThickness="0" 
                 Style="{StaticResource SidebarButtonStyles}" Click="NavigateToInviteGroupChannel">
             <Grid Width="200" Height="50" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
@@ -80,7 +92,7 @@
                 <TextBlock Text="Invite Group &amp; Channel" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="13" FontWeight="Bold"/>
             </Grid>
         </Button>
-        <Button Grid.Row="7" Width="200" Height="50" BorderThickness="0" 
+        <Button Grid.Row="8" Width="200" Height="50" BorderThickness="0" 
                 Style="{StaticResource SidebarButtonStyles}" Click="NavigateToNumberGenerator">
             <Grid Width="200" Height="50" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
@@ -91,7 +103,7 @@
                 <TextBlock Text="Number Generator" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" FontSize="14" FontWeight="Bold"/>
             </Grid>
         </Button>
-       <Button Grid.Row="8" Width="200" Height="50" BorderThickness="0" 
+        <Button Grid.Row="9" Width="200" Height="50" BorderThickness="0" 
                 Style="{StaticResource SidebarButtonStyles}" Click="NavigateToSettings">
             <Grid Width="200" Height="50" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>

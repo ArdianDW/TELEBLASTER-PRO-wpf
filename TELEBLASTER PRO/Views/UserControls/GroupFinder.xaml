@@ -93,14 +93,17 @@
                                       ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                                       RowStyle="{StaticResource DataGridRowStyle}"
                                       CellStyle="{StaticResource DataGridCellStyle}"
-                                      ItemsSource="{Binding GroupLinks}">
+                                      ItemsSource="{Binding GroupLinks}"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      SelectionMode="Extended" SelectionUnit="Cell">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Width="*">
                                         <DataGridTemplateColumn.Header>
                                             <StackPanel Orientation="Horizontal">
                                                 <CheckBox x:Name="CheckAll" 
                                                           VerticalAlignment="Center" 
-                                                          IsChecked="{Binding IsCheckedAll, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"/>
+                                                          Checked="CheckAll_Checked" 
+                                                          Unchecked="CheckAll_Unchecked"/>
                                                 <TextBlock Text="Select All" VerticalAlignment="Center" Margin="5,0,0,0"/>
                                             </StackPanel>
                                         </DataGridTemplateColumn.Header>
@@ -114,7 +117,7 @@
 
                                     <DataGridTextColumn Header="Link" Binding="{Binding Link}" Width="*" ElementStyle="{StaticResource CenteredLinkTextStyle}"/>
                                     <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                                    <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                    <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="*" ElementStyle="{StaticResource LeftAlignedTextBlockStyle}"/>
                                     <DataGridTextColumn Header="Total Member" Binding="{Binding TotalMember}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                     <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 </DataGrid.Columns>

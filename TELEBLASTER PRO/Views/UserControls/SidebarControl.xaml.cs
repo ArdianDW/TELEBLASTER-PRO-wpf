@@ -35,6 +35,11 @@ namespace TELEBLASTER_PRO.Views.UserControls
             ((MainWindow)Application.Current.MainWindow).MainContentControl.Content = new SendMessage();
         }
 
+        private void NavigateToClickToChat(object sender, RoutedEventArgs e)
+        {
+            ((MainWindow)Application.Current.MainWindow).MainContentControl.Content = new ClickToChat();
+        }
+
         private void NavigateToGroupChannel(object sender, RoutedEventArgs e)
         {
             ((MainWindow)Application.Current.MainWindow).MainContentControl.Content = new GroupChannel();

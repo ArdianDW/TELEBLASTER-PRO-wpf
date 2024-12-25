@@ -43,6 +43,7 @@
                         <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="60" Margin="5,0,0,0" Value="{Binding AddValue, UpdateSourceTrigger=PropertyChanged}"/>
                         <Button Content="Generate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Command="{Binding GenerateCommand}"/>
                         <Button Content="Validate" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Command="{Binding ValidateCommand}"/>
+                        <Button Content="Stop" Width="70" Height="25" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" Command="{Binding StopValidationCommand}" IsEnabled="{Binding IsValidating}"/>
                     </StackPanel>
                 </Grid>
                 <Grid Grid.Row="3" x:Name="NumberGridView">
@@ -66,7 +67,14 @@
                            FontSize="20" 
                            FontWeight="Bold" 
                            Margin="10,0,0,0" Height="30" Width="Auto"/>
-                        <TextBlock Text="Total Numbers : 0 Numbers Valid : 0" VerticalAlignment="Bottom" Margin="0,0,15,10" FontSize="12" FontWeight="SemiBold" Grid.Column="2"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,15,10" Grid.Column="2">
+                            <TextBlock Text="{Binding TotalNumbers, StringFormat='Total Numbers: {0}'}" 
+                                       FontSize="12" 
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding ValidNumbers, StringFormat=' Numbers Valid: {0}'}" 
+                                       FontSize="12" 
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
                     </Grid>
 
                     <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
@@ -88,7 +96,8 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
                               ItemsSource="{Binding GeneratedNumbers}"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                              HorizontalScrollBarVisibility="Disabled"
+                              SelectionMode="Extended" SelectionUnit="Cell">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Name" Binding="{Binding PrefixName}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             <DataGridTextColumn Header="Phone Number" Binding="{Binding PhoneNumber}" Width="Auto" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>

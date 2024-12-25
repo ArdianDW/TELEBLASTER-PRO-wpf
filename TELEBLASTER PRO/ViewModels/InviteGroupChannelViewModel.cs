@@ -403,7 +403,7 @@ namespace TELEBLASTER_PRO.ViewModels
         private string GetSessionNameFromPhoneNumber(string phoneNumber)
         {
             var account = Account.GetAccountsFromDatabase().FirstOrDefault(a => a.Phone == phoneNumber);
-            return account?.SessionName; // Assuming Account has a SessionName property
+            return account?.SessionName;
         }
 
         private void ClearContacts()

@@ -119,7 +119,7 @@ async def extract_groups_and_channels(session_name):
 def extract_groups_and_channels_sync(session_name):
     return asyncio.run(extract_groups_and_channels(session_name))
 
-async def extract_members(session_name, group_id, group_name, notify_callback):
+async def extract_members(session_name, group_id, group_name, notify_callback, status_callback):
     global stop_extraction
     stop_extraction = False 
 
@@ -130,9 +130,17 @@ async def extract_members(session_name, group_id, group_name, notify_callback):
         chat = await client.get_entity(group_id)
         print(f"Chat entity: {chat}")
 
+        # Check if the user is an admin or the owner of the channel
+        if isinstance(chat, Channel) and chat.broadcast:
+            # Allow extraction only if the user is the owner or has admin rights
+            if not chat.creator and not chat.admin_rights:
+                notify_callback("You are not an admin or the owner of this channel.")
+                return
+
         all_participants = []
 
-        if isinstance(chat, Channel) and chat.megagroup:
+        if isinstance(chat, Channel) and (chat.megagroup or chat.broadcast):
+            # Logic for both megagroups and channels
             queryKey = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
             for key in queryKey:
                 offset = 0
@@ -152,9 +160,9 @@ async def extract_members(session_name, group_id, group_name, notify_callback):
 
                     for user in participants.users:
                         try:
-                            if re.findall(r"\b[a-zA-Z]", user.first_name)[0].lower() == key:
+                            if chat.megagroup or (chat.broadcast and re.findall(r"\b[a-zA-Z]", user.first_name)[0].lower() == key):
                                 all_participants.append(user)
-                                notify_callback(f"Extracting {len(all_participants)} members...")
+                                status_callback(f"Extracting {len(all_participants)} members...")
                         except Exception as e:
                             print(f"Error processing user: {e}")
 
@@ -165,6 +173,7 @@ async def extract_members(session_name, group_id, group_name, notify_callback):
                     break
 
         elif isinstance(chat, Chat):
+            # Logic for basic chats
             full_chat = await client(GetFullChatRequest(chat.id))
             for participant in full_chat.full_chat.participants.participants:
                 if stop_extraction:
@@ -179,10 +188,11 @@ async def extract_members(session_name, group_id, group_name, notify_callback):
                 try:
                     user = await client.get_entity(user_id)
                     all_participants.append(user)
-                    notify_callback(f"Extracting {len(all_participants)} members...")
+                    status_callback(f"Extracting {len(all_participants)} members...")
                 except Exception as e:
                     print(f"Failed to get entity for user_id {user_id}: {e}")
 
+        # Save extracted members to the database
         conn = sqlite3.connect(get_db_path(), timeout=30)
         c = conn.cursor()
 
@@ -214,8 +224,8 @@ async def extract_members(session_name, group_id, group_name, notify_callback):
     finally:
         await client.disconnect()
 
-def extract_members_sync(session_name, group_id, group_name, notify_callback):
-    asyncio.run(extract_members(session_name, group_id, group_name, notify_callback))
+def extract_members_sync(session_name, group_id, group_name, notify_callback, status_callback):
+    asyncio.run(extract_members(session_name, group_id, group_name, notify_callback, status_callback))
 
 def stop_extraction_process():
     global stop_extraction
@@ -528,5 +538,47 @@ def logout_and_delete_session_sync(session_name):
         print(f"Error during logout and session deletion for {session_name}: {e}")
     finally:
         client.disconnect()
+
+async def send_to_user_async(session_name, target, message_text, attachment_file_path=None):
+    client = TelegramClient(session_name, api_id, api_hash)
+    await client.start()
+
+    try:
+        print(f"Session Name: {session_name}")
+        print(f"Target: {target}")
+        print(f"Message Text: {message_text}")
+        print(f"Attachment File Path: {attachment_file_path}")
+
+        # Try to get the entity as a phone number first
+        try:
+            user = await client.get_entity(target)
+        except Exception as e:
+            print(f"Failed to get entity as phone number: {e}. Trying as username.")
+            # If it fails, try to get the entity as a username
+            user = await client.get_input_entity(target)
+
+        # Directly use the message_text without Spintax processing
+        print(f"Sending message: {message_text}")
+
+        try:
+            if attachment_file_path:
+                await client.send_file(user, attachment_file_path, caption=message_text)
+                print(f"File sent to {target} with message: {message_text}")
+            else:
+                await client(SendMessageRequest(user, message_text))
+                print(f"Message sent to {target}")
+        except Exception as e:
+            print(f"Error sending message to {target}: {e}")
+            return False, f"Error sending message: {str(e)}"
+
+        return True, "Message sent successfully"
+    except Exception as e:
+        print(f"Error: {e}")
+        return False, f"Error: {str(e)}"
+    finally:
+        await client.disconnect()
+
+def send_to_user(session_name, target, message_text, attachment_file_path=None):
+    return asyncio.run(send_to_user_async(session_name, target, message_text, attachment_file_path))
 
 

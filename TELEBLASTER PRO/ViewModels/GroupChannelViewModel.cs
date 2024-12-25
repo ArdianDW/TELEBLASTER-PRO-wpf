@@ -335,7 +335,7 @@ namespace TELEBLASTER_PRO.ViewModels
                             using (Py.GIL())
                             {
                                 dynamic py = Py.Import("functions");
-                                   py.extract_members_sync(sessionName, groupId, SelectedGroup.GroupName, new Action<string>(UpdateExtractStatus));
+                                py.extract_members_sync(sessionName, groupId, SelectedGroup.GroupName, new Action<string>(NotifyCallback), new Action<string>(UpdateExtractStatus));
                             }
                             return LoadExtractedMembers(groupId);
                         });
@@ -409,6 +409,14 @@ namespace TELEBLASTER_PRO.ViewModels
             {
                 return GroupMembers.LoadGroupMembers(groupId);
             }
+        }
+
+        private void NotifyCallback(string message)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                MessageBox.Show(message, "Notification", MessageBoxButton.OK, MessageBoxImage.Information);
+            });
         }
 
         private void UpdateExtractStatus(string status)

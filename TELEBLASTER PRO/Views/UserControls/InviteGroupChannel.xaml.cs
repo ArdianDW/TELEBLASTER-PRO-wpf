@@ -28,5 +28,41 @@ namespace TELEBLASTER_PRO.Views.UserControls
             InitializeComponent();
             DataContext = new InviteGroupChannelViewModel();
         }
+
+        private void CheckAll_Checked(object sender, RoutedEventArgs e)
+        {
+            foreach (var contact in ((InviteGroupChannelViewModel)DataContext).ContactsList)
+            {
+                contact.IsChecked = true;
+            }
+        }
+
+        private void CheckAll_Unchecked(object sender, RoutedEventArgs e)
+        {
+            foreach (var contact in ((InviteGroupChannelViewModel)DataContext).ContactsList)
+            {
+                contact.IsChecked = false;
+            }
+        }
+
+        private void SelectRange_Click(object sender, RoutedEventArgs e)
+        {
+            int startIndex = (int)StartIndex.Value - 1; // Convert to zero-based index
+            int endIndex = (int)EndIndex.Value - 1;
+
+            var contactsList = ((InviteGroupChannelViewModel)DataContext).ContactsList;
+            for (int i = startIndex; i <= endIndex && i < contactsList.Count; i++)
+            {
+                contactsList[i].IsChecked = true;
+            }
+        }
+
+        private void ResetSelection_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var contact in ((InviteGroupChannelViewModel)DataContext).ContactsList)
+            {
+                contact.IsChecked = false;
+            }
+        }
     }
 }

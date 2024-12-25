@@ -117,11 +117,13 @@
                               ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                               RowStyle="{StaticResource DataGridRowStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
-                              ItemsSource="{Binding ExtractedMembers}">
+                              ItemsSource="{Binding ExtractedMembers}"
+                              HorizontalScrollBarVisibility="Disabled"
+                              SelectionMode="Extended" SelectionUnit="Cell">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="No" Width="40" Binding="{Binding No}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             <DataGridTextColumn Header="Member ID" Width="*" Binding="{Binding MemberId}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                            <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource LeftAlignedTextBlockStyle}"/>
                             <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             <DataGridTextColumn Header="Username" Width="*" Binding="{Binding Username}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>

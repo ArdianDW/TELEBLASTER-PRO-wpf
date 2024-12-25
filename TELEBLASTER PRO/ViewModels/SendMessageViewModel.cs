@@ -15,6 +15,7 @@ using TELEBLASTER_PRO.Helpers;
 using ClosedXML.Excel;
 using TELEBLASTER_PRO.ViewModels;
 using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -90,6 +91,8 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand ExportContactsCommand { get; }
         public ICommand ImportContactsCommand { get; }
         public ICommand ClearContactsCommand { get; }
+        public ICommand EmojiPickerCommand { get; }
+        public ICommand StopSendingCommand { get; }
 
         private string _attachmentFilePath;
         public string AttachmentFilePath
@@ -188,6 +191,35 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        private bool _stopSending;
+        public bool StopSending
+        {
+            get => _stopSending;
+            set
+            {
+                _stopSending = value;
+                OnPropertyChanged(nameof(StopSending));
+            }
+        }
+
+        // Import user32.dll for keybd_event function
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
+
+        private const uint KEYEVENTF_KEYUP = 0x0002;
+
+        private void SimulateKeyPress(Key modifierKey, Key key)
+        {
+            // Tekan tombol modifier (Win)
+            keybd_event((byte)KeyInterop.VirtualKeyFromKey(modifierKey), 0, 0, 0);
+            // Tekan tombol utama (.)
+            keybd_event((byte)KeyInterop.VirtualKeyFromKey(key), 0, 0, 0);
+            // Lepaskan tombol utama (.)
+            keybd_event((byte)KeyInterop.VirtualKeyFromKey(key), 0, KEYEVENTF_KEYUP, 0);
+            // Lepaskan tombol modifier (Win)
+            keybd_event((byte)KeyInterop.VirtualKeyFromKey(modifierKey), 0, KEYEVENTF_KEYUP, 0);
+        }
+
         public SendMessageViewModel(AccountViewModel accountViewModel)
         {
             _accountViewModel = accountViewModel;
@@ -198,6 +230,8 @@ namespace TELEBLASTER_PRO.ViewModels
             ImportContactsCommand = new RelayCommand(_ => ImportContacts());
             SendMessageCommand = new RelayCommand(_ => SendMessage());
             ClearContactsCommand = new RelayCommand(_ => ClearContacts());
+            EmojiPickerCommand = new RelayCommand(_ => OpenEmojiPicker());
+            StopSendingCommand = new RelayCommand(_ => StopSending = true);
 
             // Initialize counts
             TotalContacts = ContactsList.Count;
@@ -381,7 +415,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 bool allMessagesSent = false;
                 TotalTarget = ContactsList.Count(c => c.IsChecked); // Update total target
 
-                while (!allMessagesSent)
+                while (!allMessagesSent && !StopSending)
                 {
                     try
                     {
@@ -401,10 +435,13 @@ namespace TELEBLASTER_PRO.ViewModels
                         Debug.WriteLine($"Messages Per Number: {messagesPerNumber}");
                         Debug.WriteLine($"Attachment File Path: {AttachmentFilePath}");
                         Debug.WriteLine($"Running on thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+                        Debug.WriteLine($"IsSwitchNumberChecked: {IsSwitchNumberChecked}");
+
 
                         var activeAccounts = GetActiveAccounts().ToList();
                         if (IsSwitchNumberChecked && activeAccounts.Any())
                         {
+                            Debug.WriteLine("Switch is ON: Automatically changing accounts.");
                             int totalRecipients = recipientIds.Count;
                             int accountIndex = 0;
 
@@ -416,6 +453,8 @@ namespace TELEBLASTER_PRO.ViewModels
 
                                 foreach (var recipientId in batchRecipientIds)
                                 {
+                                    if (StopSending) break; // Check if stop is requested
+
                                     var contact = ContactsList.FirstOrDefault(c => c.ContactId == recipientId);
                                     CurrentRecipientName = contact?.FirstName ?? "Unknown";
 
@@ -450,11 +489,14 @@ namespace TELEBLASTER_PRO.ViewModels
                         }
                         else
                         {
+                            Debug.WriteLine("Switch is OFF: Using a single account.");
                             string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
                             Debug.WriteLine($"Using session: {sessionName} for all recipients.");
 
                             foreach (var recipientId in recipientIds)
                             {
+                                if (StopSending) break; // Check if stop is requested
+
                                 var contact = ContactsList.FirstOrDefault(c => c.ContactId == recipientId);
                                 CurrentRecipientName = contact?.FirstName ?? "Unknown";
 
@@ -508,6 +550,14 @@ namespace TELEBLASTER_PRO.ViewModels
                     finally
                     {
                         IsSending = false; // Selesai pengiriman
+                        if (StopSending)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                MessageBox.Show("Sending message stopped.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                            });
+                        }
+                        StopSending = false; // Reset StopSending
                     }
                 }
             });
@@ -542,6 +592,14 @@ namespace TELEBLASTER_PRO.ViewModels
             TotalTarget = 0;
             SuccessCount = 0;
             FailCount = 0;
+        }
+
+        public event Action RequestFocusOnTextBox;
+
+        private void OpenEmojiPicker()
+        {
+            SimulateKeyPress(Key.LWin, Key.OemPeriod);
+            RequestFocusOnTextBox?.Invoke();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

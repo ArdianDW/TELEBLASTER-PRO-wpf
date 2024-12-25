@@ -26,5 +26,21 @@ namespace TELEBLASTER_PRO.Views.UserControls
             InitializeComponent();
             DataContext = new GroupFinderViewModel(); // Set DataContext to GroupFinderViewModel
         }
+
+        private void CheckAll_Checked(object sender, RoutedEventArgs e)
+        {
+            foreach (var link in ((GroupFinderViewModel)DataContext).GroupLinks)
+            {
+                link.IsChecked = true;
+            }
+        }
+
+        private void CheckAll_Unchecked(object sender, RoutedEventArgs e)
+        {
+            foreach (var link in ((GroupFinderViewModel)DataContext).GroupLinks)
+            {
+                link.IsChecked = false;
+            }
+        }
     }
 }

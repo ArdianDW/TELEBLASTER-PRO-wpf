@@ -28,9 +28,44 @@ namespace TELEBLASTER_PRO.Views.UserControls
             InitializeComponent();
             var viewModel = new SendMessageViewModel(new AccountViewModel());
             DataContext = viewModel;
-            System.Diagnostics.Debug.WriteLine($"DataContext is set to: {DataContext.GetType().Name}");
-            System.Diagnostics.Debug.WriteLine($"IsCheckedAll initial value: {viewModel.IsCheckedAll}");
+
+            viewModel.RequestFocusOnTextBox += () => CustomTextBox.Focus();
         }
 
+        private void CheckAll_Checked(object sender, RoutedEventArgs e)
+        {
+            foreach (var contact in ((SendMessageViewModel)DataContext).ContactsList)
+            {
+                contact.IsChecked = true;
+            }
+        }
+
+        private void CheckAll_Unchecked(object sender, RoutedEventArgs e)
+        {
+            foreach (var contact in ((SendMessageViewModel)DataContext).ContactsList)
+            {
+                contact.IsChecked = false;
+            }
+        }
+
+        private void SelectRange_Click(object sender, RoutedEventArgs e)
+        {
+            int startIndex = (int)StartIndex.Value - 1; // Convert to zero-based index
+            int endIndex = (int)EndIndex.Value - 1;
+
+            var contactsList = ((SendMessageViewModel)DataContext).ContactsList;
+            for (int i = startIndex; i <= endIndex && i < contactsList.Count; i++)
+            {
+                contactsList[i].IsChecked = true;
+            }
+        }
+
+        private void ResetSelection_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var contact in ((SendMessageViewModel)DataContext).ContactsList)
+            {
+                contact.IsChecked = false;
+            }
+        }
     }
 }

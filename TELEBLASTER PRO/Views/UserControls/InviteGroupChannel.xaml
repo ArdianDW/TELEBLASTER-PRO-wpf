@@ -107,11 +107,11 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,15,0">
                         <TextBlock Text="Select index" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                        <TextBox Width="45" Height="20" Margin="5,0,0,0"/>
+                        <controls:NumericUpDownControl x:Name="StartIndex" Width="45" Height="20" Margin="5,0,0,0"/>
                         <Label Content="━" VerticalContentAlignment="Center"/>
-                        <TextBox Width="45" Height="20" Margin="5,0,0,0"/>
-                        <Button Content="Select" Width="40" Height="25" Margin="5,0,5,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
-                        <Button Content="Reset" Width="40" Height="25" Margin="0,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10"/>
+                        <controls:NumericUpDownControl x:Name="EndIndex" Width="45" Height="20" Margin="5,0,0,0"/>
+                        <Button Content="Select" Width="40" Height="25" Margin="5,0,5,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Click="SelectRange_Click"/>
+                        <Button Content="Reset" Width="40" Height="25" Margin="0,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10" Click="ResetSelection_Click"/>
                     </StackPanel>
                 </Grid>
                 <DataGrid x:Name="ContactsDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*" 
@@ -120,14 +120,17 @@
                   ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                   RowStyle="{StaticResource DataGridRowStyle}"
                   CellStyle="{StaticResource DataGridCellStyle}"
-                  ItemsSource="{Binding ContactsList}">
+                  ItemsSource="{Binding ContactsList}"
+                  HorizontalScrollBarVisibility="Disabled"
+                  SelectionMode="Extended" SelectionUnit="Cell">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Width="*">
                             <DataGridTemplateColumn.Header>
                                 <StackPanel Orientation="Horizontal">
                                     <CheckBox x:Name="CheckAll" 
                                               VerticalAlignment="Center"
-                                              IsChecked="{Binding IsCheckedAll, Mode=TwoWay}"/>
+                                              Checked="CheckAll_Checked"
+                                              Unchecked="CheckAll_Unchecked"/>
                                     <TextBlock Text="Select All" VerticalAlignment="Center" Margin="5,0,0,0"/>
                                 </StackPanel>
                             </DataGridTemplateColumn.Header>
@@ -140,7 +143,7 @@
                         </DataGridTemplateColumn>
                         <DataGridTextColumn Header="No" Width="40" Binding="{Binding Id}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTextColumn Header="User ID" Width="*" Binding="{Binding ContactId}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource LeftAlignedTextBlockStyle}"/>
                         <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>

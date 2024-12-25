@@ -48,7 +48,8 @@
                                     <ColumnDefinition Width="8*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                    <Button Content="Emoji Picker" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="15, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                    <Button Content="Emoji Picker" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="15, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                            Command="{Binding EmojiPickerCommand}"/>
                                     <Button Content="Browse File" Style="{StaticResource FeatureButtonStyles}" Width="100" Height="30" Margin="0, 0, 10 0" HorizontalAlignment="Left" VerticalAlignment="Top"
                                             Command="{Binding BrowseFileCommand}"/>
                                     <TextBlock Text="{Binding AttachmentFilePath}" VerticalAlignment="Center" Margin="5,0,0,15" FontSize="12" FontWeight="SemiBold"/>
@@ -127,7 +128,8 @@
                                         <TextBlock Text="Delay per message" Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                         <Button Content="Send" Width="70" Height="30" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" HorizontalAlignment="Right"
                                                 Command="{Binding SendMessageCommand}"/>
-                                        <Button Content="Stop" Width="70" Height="30" Margin="10,0,0,0" Style="{StaticResource WarningButtonStyles}"/>
+                                        <Button Content="Stop" Width="70" Height="30" Margin="10,0,0,0" Style="{StaticResource WarningButtonStyles}"
+                                                Command="{Binding StopSendingCommand}"/>
                                     </StackPanel>
                                 </Grid>
                             </Grid>
@@ -192,11 +194,11 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,15,0">
                                 <TextBlock Text="Select index" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                <TextBox Width="45" Height="20" Margin="5,0,0,0"/>
+                                <controls:NumericUpDownControl x:Name="StartIndex" Width="45" Height="20" Margin="5,0,0,0"/>
                                 <Label Content="━" VerticalContentAlignment="Center"/>
-                                <TextBox Width="45" Height="20" Margin="5,0,0,0"/>
-                                <Button Content="Select" Width="40" Height="20" Margin="5,0,5,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
-                                <Button Content="Reset" Width="40" Height="20" Margin="0,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10"/>
+                                <controls:NumericUpDownControl x:Name="EndIndex" Width="45" Height="20" Margin="5,0,0,0"/>
+                                <Button Content="Select" Width="40" Height="20" Margin="5,0,5,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10" Click="SelectRange_Click"/>
+                                <Button Content="Reset" Width="40" Height="20" Margin="0,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10" Click="ResetSelection_Click"/>
                             </StackPanel>
                         </Grid>
                         <DataGrid x:Name="ContactsDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*" 
@@ -205,14 +207,17 @@
                               ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
                               RowStyle="{StaticResource DataGridRowStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
-                              ItemsSource="{Binding ContactsList}">
+                              ItemsSource="{Binding ContactsList}"
+                              HorizontalScrollBarVisibility="Disabled"
+                              SelectionMode="Extended" SelectionUnit="Cell">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Width="*">
                                     <DataGridTemplateColumn.Header>
                                         <StackPanel Orientation="Horizontal">
                                             <CheckBox x:Name="CheckAll" 
                                                       VerticalAlignment="Center" 
-                                                      IsChecked="{Binding IsCheckedAll, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"/>
+                                                      Checked="CheckAll_Checked" 
+                                                      Unchecked="CheckAll_Unchecked"/>
                                             <TextBlock Text="Select All" VerticalAlignment="Center" Margin="5,0,0,0"/>
                                         </StackPanel>
                                     </DataGridTemplateColumn.Header>
@@ -225,7 +230,7 @@
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="No" Width="40" Binding="{Binding Id}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="User ID" Width="*" Binding="{Binding ContactId}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                                <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource LeftAlignedTextBlockStyle}"/>
                                 <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>

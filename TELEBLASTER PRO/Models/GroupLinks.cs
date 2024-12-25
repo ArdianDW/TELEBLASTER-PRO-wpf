@@ -10,6 +10,7 @@ namespace TELEBLASTER_PRO.Models
     public class GroupLinks : INotifyPropertyChanged
     {
         private int _check;
+        private bool _isChecked;
         public int Id { get; set; }
         public string Link { get; set; }
         public int Check
@@ -41,6 +42,18 @@ namespace TELEBLASTER_PRO.Models
             }
         }
         public string Status { get; set; }
+        public bool IsChecked
+        {
+            get => _isChecked;
+            set
+            {
+                if (_isChecked != value)
+                {
+                    _isChecked = value;
+                    OnPropertyChanged(nameof(IsChecked));
+                }
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

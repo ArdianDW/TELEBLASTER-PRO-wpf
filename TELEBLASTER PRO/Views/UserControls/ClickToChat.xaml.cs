@@ -12,26 +12,22 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using TELEBLASTER_PRO.Models;
-using System.Diagnostics;
 using TELEBLASTER_PRO.ViewModels;
 
 namespace TELEBLASTER_PRO.Views.UserControls
 {
     /// <summary>
-    /// Interaction logic for Accounts.xaml
+    /// Interaction logic for ClickToChat.xaml
     /// </summary>
-    public partial class Accounts : UserControl
+    public partial class ClickToChat : UserControl
     {
-        public Accounts()
+        public ClickToChat()
         {
             InitializeComponent();
-            DataContext = new AccountViewModel(); 
-        }
+            var viewModel = new ClickToChatViewModel();
+            DataContext = viewModel;
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-
+            viewModel.RequestFocusOnTextBox += () => CustomTextBox.Focus();
         }
     }
 }

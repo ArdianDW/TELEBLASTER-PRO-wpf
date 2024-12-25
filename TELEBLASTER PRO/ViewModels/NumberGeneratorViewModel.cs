@@ -16,6 +16,10 @@ namespace TELEBLASTER_PRO.ViewModels
     {
         private int _addValue;
         private bool _isLoading;
+        private int _totalNumbers;
+        private int _validNumbers;
+        private bool _isValidating;
+        private bool _stopValidation;
 
         public string PrefixName
         {
@@ -61,6 +65,7 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand GenerateCommand { get; }
         public ICommand ValidateCommand { get; }
         public ICommand ClearNumbersCommand { get; }
+        public ICommand StopValidationCommand { get; }
 
         public bool IsLoading
         {
@@ -72,16 +77,58 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        public int TotalNumbers
+        {
+            get => _totalNumbers;
+            set
+            {
+                _totalNumbers = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int ValidNumbers
+        {
+            get => _validNumbers;
+            set
+            {
+                _validNumbers = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsValidating
+        {
+            get => _isValidating;
+            set
+            {
+                _isValidating = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool StopValidation
+        {
+            get => _stopValidation;
+            set
+            {
+                _stopValidation = value;
+                OnPropertyChanged();
+            }
+        }
+
         public NumberGeneratorViewModel()
         {
             GenerateCommand = new RelayCommand(_ => GenerateNumbers());
             ValidateCommand = new RelayCommand(_ => Task.Run(() => ValidateNumbersAsync()));
             ClearNumbersCommand = new RelayCommand(_ => ClearNumbers());
+            StopValidationCommand = new RelayCommand(_ => StopValidation = true, _ => IsValidating);
         }
 
         private void GenerateNumbers()
         {
             GeneratedNumbers.Clear();
+            TotalNumbers = 0; // Reset total numbers
             if (long.TryParse(NumberPrefix, out long baseNumber))
             {
                 for (int i = 1; i <= AddValue; i++)
@@ -101,6 +148,7 @@ namespace TELEBLASTER_PRO.ViewModels
             {
                 throw new InvalidOperationException("NumberPrefix harus berupa angka.");
             }
+            TotalNumbers = GeneratedNumbers.Count; // Update total numbers
         }
 
         private void SaveNumberToDatabase(NumberGenerated number)
@@ -117,13 +165,23 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private async Task ValidateNumbersAsync()
         {
+            IsValidating = true;
+            StopValidation = false;
+
             var activeAccounts = GetActiveAccounts().ToList();
+            if (!activeAccounts.Any())
+            {
+                Debug.WriteLine("No active accounts available for validation.");
+                IsValidating = false;
+                return;
+            }
+
             int accountIndex = 0;
-            int numbersPerAccount = 3;
+            int numbersPerAccount = 1; // Kurangi jumlah nomor per batch
             var random = new Random();
 
             bool allNumbersValidated = false;
-            while (!allNumbersValidated)
+            while (!allNumbersValidated && !StopValidation)
             {
                 try
                 {
@@ -132,54 +190,64 @@ namespace TELEBLASTER_PRO.ViewModels
                         IsLoading = true; // Menampilkan ValidateStatusBar
                     });
 
-                    using (Py.GIL())
+                    for (int i = 0; i < GeneratedNumbers.Count; i++)
                     {
-                        dynamic functions = Py.Import("functions");
-                        for (int i = 0; i < GeneratedNumbers.Count; i++)
+                        if (StopValidation)
                         {
-                            var number = GeneratedNumbers[i];
-                            string currentSession = activeAccounts[accountIndex].SessionName;
+                            break;
+                        }
 
-                            Debug.WriteLine($"Validating phone number: {number.PhoneNumber} using session: {currentSession}");
+                        var number = GeneratedNumbers[i];
+                        string currentSession = activeAccounts[accountIndex].SessionName;
 
-                            var result = functions.validate_phone_number_sync(currentSession, number.PhoneNumber);
-                            bool isValid = result[0].As<bool>();
-                            dynamic userInfo = result[1];
+                        Debug.WriteLine($"Validating phone number: {number.PhoneNumber} using session: {currentSession}");
 
-                            // Logging hasil dari Python
-                            Debug.WriteLine($"Validation result for {number.PhoneNumber}: isValid={isValid}, userInfo={userInfo}");
-
-                            if (isValid)
+                        // Pindahkan operasi Python ke dalam Dispatcher.Invoke
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            using (Py.GIL())
                             {
-                                number.UserId = userInfo["user_id"].As<long>().ToString();
-                                number.AccessHash = userInfo["access_hash"].As<long>().ToString();
-                                number.Username = userInfo["username"].As<string>();
-                                number.Status = "Valid";
+                                dynamic functions = Py.Import("functions");
+                                var result = functions.validate_phone_number_sync(currentSession, number.PhoneNumber);
+                                bool isValid = result[0].As<bool>();
+                                dynamic userInfo = result[1];
 
-                                Debug.WriteLine($"Phone number {number.PhoneNumber} is valid. User ID: {number.UserId}, Username: {number.Username}");
+                                // Logging hasil dari Python
+                                Debug.WriteLine($"Validation result for {number.PhoneNumber}: isValid={isValid}, userInfo={userInfo}");
+
+                                if (isValid)
+                                {
+                                    number.UserId = userInfo["user_id"].As<long>().ToString();
+                                    number.AccessHash = userInfo["access_hash"].As<long>().ToString();
+                                    number.Username = userInfo["username"].As<string>();
+                                    number.Status = "Valid";
+
+                                    Debug.WriteLine($"Phone number {number.PhoneNumber} is valid. User ID: {number.UserId}, Username: {number.Username}");
+                                }
+                                else
+                                {
+                                    number.Status = "Invalid";
+                                    number.UserId = string.Empty;
+                                    number.AccessHash = string.Empty;
+                                    number.Username = string.Empty;
+
+                                    Debug.WriteLine($"Phone number {number.PhoneNumber} is not valid.");
+                                }
                             }
-                            else
-                            {
-                                number.Status = "Invalid";
-                                number.UserId = string.Empty;
-                                number.AccessHash = string.Empty;
-                                number.Username = string.Empty;
+                        });
 
-                                Debug.WriteLine($"Phone number {number.PhoneNumber} is not valid.");
-                            }
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            OnPropertyChanged(nameof(GeneratedNumbers));
+                        });
 
-                            App.Current.Dispatcher.Invoke(() =>
-                            {
-                                OnPropertyChanged(nameof(GeneratedNumbers));
-                            });
+                        int delay = random.Next(1, 2) * 1000; // Tambahkan jeda yang lebih panjang
+                        await Task.Delay(delay);
 
-                            int delay = random.Next(1, 2) * 1000;
-                            await Task.Delay(delay);
-
-                            if ((i + 1) % numbersPerAccount == 0)
-                            {
-                                accountIndex = (accountIndex + 1) % activeAccounts.Count;
-                            }
+                        if ((i + 1) % numbersPerAccount == 0 && activeAccounts.Count > 1)
+                        {
+                            accountIndex = (accountIndex + 1) % activeAccounts.Count;
+                            await Task.Delay(5000); // Tambahkan jeda setelah setiap batch
                         }
                     }
 
@@ -212,6 +280,9 @@ namespace TELEBLASTER_PRO.ViewModels
                     });
                 }
             }
+
+            IsValidating = false;
+            ValidNumbers = GeneratedNumbers.Count(n => n.Status == "Valid"); // Update valid numbers
         }
 
         private IEnumerable<Account> GetActiveAccounts()
@@ -230,6 +301,8 @@ namespace TELEBLASTER_PRO.ViewModels
             if (result == MessageBoxResult.Yes)
             {
                 GeneratedNumbers.Clear();
+                TotalNumbers = 0; // Reset total numbers
+                ValidNumbers = 0; // Reset valid numbers
             }
         }
 
