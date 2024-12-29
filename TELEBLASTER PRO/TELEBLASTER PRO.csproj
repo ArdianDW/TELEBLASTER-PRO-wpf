@@ -9,10 +9,11 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Resources\Assets\Images\teleblaster-icon.ico</ApplicationIcon>
-	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-	  <SelfContained>true</SelfContained>
-	  <PublishSingleFile>true</PublishSingleFile>
-	  <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,6 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autoupdater.NET.Official" Version="1.9.2" />
     <PackageReference Include="ClosedXML" Version="0.104.1" />
     <PackageReference Include="Costura.Fody" Version="5.7.0">
       <PrivateAssets>all</PrivateAssets>
@@ -67,6 +69,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="addAccount.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Backend\addAccount.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -78,6 +83,15 @@
     </None>
     <None Update="Drivers\chromedriver.exe">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="functions.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="groupFinder.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="login.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="PythonScripts\addAccount.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

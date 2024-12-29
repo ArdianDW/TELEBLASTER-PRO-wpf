@@ -38,7 +38,7 @@
         <Grid Grid.Row="1" x:Name="CheckingGrid" Visibility="Collapsed">
             <StackPanel Orientation="Horizontal" x:Name="CheckStatusBar" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <controls:DonutSpinner Height="35" Width="35" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Center" Margin="10,0,0,0"/>
-                <TextBlock Text="Checking lisence..." VerticalAlignment="Center" Margin="10,0,0,0" FontSize="20" FontWeight="SemiBold"/>
+                <TextBlock Text="Checking license..." VerticalAlignment="Center" Margin="10,0,0,0" FontSize="20" FontWeight="SemiBold"/>
             </StackPanel>
         </Grid>
     </Grid>

@@ -11,6 +11,11 @@ def get_db_path():
     app_data_path = os.environ['LOCALAPPDATA']
     return os.path.join(app_data_path, "TELEBLASTER_PRO", "teleblaster.db")
 
+def get_session_path(session_name):
+    app_data_path = os.environ['LOCALAPPDATA']
+    session_dir = os.path.join(app_data_path, "TELEBLASTER_PRO", "sessions")
+    return os.path.join(session_dir, session_name)
+
 def get_account_details(session_name):
     conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
@@ -32,7 +37,8 @@ async def main(session_name):
         print(f"No account found for session: {session_name}")
         return
 
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     try:
         await client.start(phone=lambda: phone_number)
         if not await client.is_user_authorized():

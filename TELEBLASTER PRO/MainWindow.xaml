@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TELEBLASTER_PRO"
         xmlns:userControls="clr-namespace:TELEBLASTER_PRO.Views.UserControls"
+        xmlns:controls="clr-namespace:TELEBLASTER_PRO.Controls"
         mc:Ignorable="d"
         Title="TELEBLASTER PRO" Height="600" Width="800" Background="#ededed"
         MinWidth="800" MinHeight="600"
@@ -31,21 +32,27 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="50"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Button x:Name="HamburgerButton" Content="☰" Width="35" Height="35" Click="HamburgerButton_Click" 
                             VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" Grid.Column="0"
                             Style="{StaticResource GlobalButtonStyles}" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" x:Name="UpdateSpinner">
+                        <controls:DonutSpinner Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Center" Margin="10,0,0,0"/>
+                        <TextBlock x:Name="UpdateStatusTextBlock" Text="Checking update..." VerticalAlignment="Center" Margin="10,0,0,0" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    </StackPanel>
                     <Border Grid.Column="2">
-                        <Grid>
+                        <Grid Margin="0,0,15,0">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="50"/>
                                 <ColumnDefinition Width="50"/>
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="CommunityButton" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource GlobalButtonStyles}">
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center"  Margin="0,0,10,0" FontSize="14" FontWeight="SemiBold" Text="{Binding ApplicationVersion, StringFormat='ver {0}'}"/>
+                            <Button x:Name="CommunityButton" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource GlobalButtonStyles}">
                                 <Image Source="{StaticResource icon-community}" Width="30" Height="30"/>
                             </Button>
-                            <Button x:Name="HelpButton" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource GlobalButtonStyles}">
+                            <Button x:Name="HelpButton" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource GlobalButtonStyles}">
                                 <Image Source="{StaticResource icon-help}" Width="30" Height="30"/>
                             </Button>
                         </Grid>
@@ -54,11 +61,11 @@
             </Border>
             <ContentControl x:Name="MainContentControl" Grid.Row="1" />
             <Rectangle x:Name="MainOverlay"
-                   Grid.Row="1"
-                   Fill="Gray"
-                   Opacity="0.5"
-                   Visibility="Collapsed"
-                   IsHitTestVisible="True"/>
+                       Grid.Row="1"
+                       Fill="Gray"
+                       Opacity="0.5"
+                       Visibility="Collapsed"
+                       IsHitTestVisible="True"/>
         </Grid>
     </Grid>
 </Window>

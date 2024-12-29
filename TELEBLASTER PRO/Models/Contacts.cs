@@ -12,6 +12,7 @@ namespace TELEBLASTER_PRO.Models
     public class Contacts : INotifyPropertyChanged
     {
         public int Id { get; set; }
+        public int No { get; set; }
         public int UserId { get; set; }
         public string ContactId { get; set; }
         public string AccessHash { get; set; }
@@ -57,11 +58,13 @@ namespace TELEBLASTER_PRO.Models
             {
                 using (var reader = command.ExecuteReader())
                 {
+                    int index = 1;
                     while (reader.Read())
                     {
                         contacts.Add(new Contacts
                         {
                             Id = reader.GetInt32(0),
+                            No = index++,
                             UserId = reader.GetInt32(1),
                             ContactId = reader.GetString(2),
                             AccessHash = reader.GetString(3),

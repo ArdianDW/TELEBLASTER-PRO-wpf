@@ -14,6 +14,12 @@ def get_db_path():
     app_data_path = os.environ['LOCALAPPDATA']
     return os.path.join(app_data_path, "TELEBLASTER_PRO", "teleblaster.db")
 
+def get_session_path(session_name):
+    app_data_path = os.environ['LOCALAPPDATA']
+    session_dir = os.path.join(app_data_path, "TELEBLASTER_PRO", "sessions")
+    os.makedirs(session_dir, exist_ok=True)  # Buat direktori jika belum ada
+    return os.path.join(session_dir, session_name)
+
 def get_highest_session_name():
     conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
@@ -28,8 +34,9 @@ def get_highest_session_name():
     return f'user{highest_number + 1}.session'
 
 session_name = get_highest_session_name()
+session_path = get_session_path(session_name)
 
-client = TelegramClient(session_name, api_id, api_hash)
+client = TelegramClient(session_path, api_id, api_hash)
 
 async def main():
     try:

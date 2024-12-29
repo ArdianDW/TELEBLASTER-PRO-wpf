@@ -55,7 +55,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Image Source="{StaticResource di_SendMessage_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
+                <Image Source="{StaticResource di_ClickToChatIcon_xaml}" Width="30" Height="30" Grid.Column="0" VerticalAlignment="Center"/>
                 <TextBlock Text="Click to Chat" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,77,0" FontSize="14" FontWeight="Bold"/>
             </Grid>
         </Button>

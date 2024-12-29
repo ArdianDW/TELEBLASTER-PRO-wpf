@@ -23,19 +23,36 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand EmojiPickerCommand { get; }
 
         public ObservableCollection<string> ActivePhoneNumbers { get; set; }
-        private string _selectedPhoneNumber;
+        
         public string SelectedPhoneNumber
         {
-            get => _selectedPhoneNumber;
+            get => ExtractedDataStore.Instance.ClickToChatSelectedPhoneNumber;
             set
             {
-                _selectedPhoneNumber = value;
+                ExtractedDataStore.Instance.ClickToChatSelectedPhoneNumber = value;
                 OnPropertyChanged(nameof(SelectedPhoneNumber)); 
             }
         }
 
-        public string MessageText { get; set; }
-        public string Target  { get; set; }
+        public string MessageText
+        {
+            get => ExtractedDataStore.Instance.ClickToChatMessageText;
+            set
+            {
+                ExtractedDataStore.Instance.ClickToChatMessageText = value;
+                OnPropertyChanged(nameof(MessageText));
+            }
+        }
+
+        public string Target
+        {
+            get => ExtractedDataStore.Instance.ClickToChatTarget;
+            set
+            {
+                ExtractedDataStore.Instance.ClickToChatTarget = value;
+                OnPropertyChanged(nameof(Target));
+            }
+        }
 
         private string _attachmentFilePath;
         public string AttachmentFilePath
@@ -85,7 +102,7 @@ namespace TELEBLASTER_PRO.ViewModels
             {
                 using (Py.GIL())
                 {
-                    dynamic py = Py.Import("functions");
+                    dynamic py = Py.Import("Backend.functions");
                     var result = py.send_to_user(sessionName, Target, MessageText, AttachmentFilePath);
                     bool success = result[0];
                     string message = result[1];

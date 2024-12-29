@@ -5,17 +5,17 @@ from selenium.webdriver.common.by import By
 import os
 import sqlite3
 import time
+import subprocess
 
 def get_db_path():
     app_data_path = os.environ['LOCALAPPDATA']
     return os.path.join(app_data_path, "TELEBLASTER_PRO", "teleblaster.db")
 
-def automate_group_finding(keyword, pages, is_headless=True):
-    print(f"Running with is_headless={is_headless}")  # Log nilai is_headless
+def automate_group_finding(keyword, pages):
     driver = None
     try:
         # Open browser
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        base_path = os.path.abspath(os.path.dirname(__file__))
         chrome_path = os.path.join(base_path, "drivers", "GoogleChromePortable", "GoogleChromePortable.exe")
         driver_path = os.path.join(base_path, "drivers", "chromedriver.exe")
         
@@ -32,9 +32,6 @@ def automate_group_finding(keyword, pages, is_headless=True):
         options.add_argument("--enable-automation")
         options.add_argument("--remote-debugging-port=9222")
         options.add_argument("--app=https://www.google.com")
-        
-        if is_headless is True:
-            options.add_argument("--headless")
         
         service = Service(driver_path)
         driver = webdriver.Chrome(service=service, options=options)
@@ -80,7 +77,6 @@ def automate_group_finding(keyword, pages, is_headless=True):
         
         for telegram_link in group_links:
             print(telegram_link)
-        
         return "Scraping completed successfully"
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -89,12 +85,10 @@ def automate_group_finding(keyword, pages, is_headless=True):
         # Close browser
         if driver is not None:
             try:
-                driver.quit()
+                driver.close()
                 print("Browser closed successfully.")
-                return "Browser closed successfully"
             except Exception as e:
                 print(f"Failed to close browser: {e}")
-                return f"Failed to close browser: {e}"
 
 def clear_database():
     try:

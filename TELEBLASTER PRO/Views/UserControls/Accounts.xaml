@@ -55,11 +55,12 @@
                          Margin="15,10,0,10">   
                         <Button Content="Add Account" Width="100" Height="30" Style="{StaticResource FeatureButtonStyles}" Command="{Binding AddAccountCommand}"/>
                         <Button Content="Refresh" Width="100" Height="30" Margin="5" Style="{StaticResource FeatureButtonStyles}" Command="{Binding RefreshCommand}"/>
-                        <Button Content="Logout All" Width="100" Height="30" Margin="5" Style="{StaticResource WarningButtonStyles}"/>
+                        <Button Content="Logout All" Width="90" Height="30" Margin="5" Style="{StaticResource WarningButtonStyles}" Command="{Binding LogoutAllCommand}"/>
+                        <Button Content="Delete All" Width="90" Height="30" Margin="5" Style="{StaticResource WarningButtonStyles}" Command="{Binding DeleteAllCommand}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" x:Name="StatusBar" Visibility="{Binding IsRefreshing, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <controls:DonutSpinner  Height="30" Width="30" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="10,0,0,0"/>
-                        <TextBlock Text="Refreshing...." VerticalAlignment="Center" Margin="10,0,0,0" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding StatusBarText}" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="14" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Grid>
 
@@ -74,7 +75,7 @@
                           HorizontalScrollBarVisibility="Disabled">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="User ID" Binding="{Binding TelegramUserId}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="*" ElementStyle="{StaticResource LeftAlignedTextBlockStyle}"/>
                         <DataGridTextColumn Header="Real Name" Binding="{Binding Realname}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                         <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>

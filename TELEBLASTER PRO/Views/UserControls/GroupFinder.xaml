@@ -43,19 +43,15 @@
                             <controls:NumericUpDownControl Style="{StaticResource NumericUpDownControlStyle}" Width="35" Margin="5,0,0,0" Value="{Binding Pages, UpdateSourceTrigger=PropertyChanged, FallbackValue=1}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Grid.Column="2">
-                            <CheckBox VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14" 
-                                      IsChecked="{Binding IsHeadless, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                Show browser
-                            </CheckBox>
-                            <Button Content="Start" Width="70" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" Command="{Binding StartCommand}"/>
+                            <Button Content="Start" Width="70" Height="25" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" Command="{Binding StartCommand}"/>
                             <Button Content="Filter Links" Width="80" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" Command="{Binding FilterLinksCommand}"/>
+                            <Button Content="Delete Links" Width="80" Height="25" Margin="5,0,0,0" Style="{StaticResource WarningButtonStyles}" FontSize="10" Command="{Binding DeleteLinksCommand}"/>
                         </StackPanel>
                     </Grid>
                     <Grid Grid.Row="3" Margin="0,5,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="35"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="40"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                     <Grid Grid.Row="0" >
@@ -64,29 +60,36 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                        <Label Content="Group &amp; Channel Links" 
-                           HorizontalAlignment="Left" 
-                           VerticalAlignment="Center" 
-                           FontFamily="Century Gothic" 
-                           Grid.Column="0"
-                           FontSize="18" 
-                           FontWeight="Bold" 
-                           Margin="10,0,0,0" Height="40" Width="Auto"/>
-                        <TextBlock Text="Total Links : 0 Total Target : 0 Success : 0 Fail : 0" VerticalAlignment="Center" Margin="0,0,15,0" FontSize="12" FontWeight="SemiBold" Grid.Column="2"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Label Content="Group &amp; Channel Links" 
+                                   HorizontalAlignment="Left" 
+                                   VerticalAlignment="Center" 
+                                   FontFamily="Century Gothic" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Margin="10,0,0,0" Height="40" Width="Auto"/>
+                            <StackPanel Orientation="Horizontal" x:Name="FilterStatusBar" Visibility="{Binding IsFiltering, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <controls:DonutSpinner Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" x:Name="JoinStatusBar" Visibility="{Binding IsJoining, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <controls:DonutSpinner Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,15,0" Grid.Column="2">
+                            <TextBlock Text="{Binding TotalLinks, StringFormat='Total Links: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding TotalTarget, StringFormat='Total Target: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Success, StringFormat='Success: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Fail, StringFormat='Fail: {0}'}" Margin="5,0" FontSize="12" FontWeight="SemiBold"/>
+                        </StackPanel>
                     </Grid>
 
                         <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
 
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10,0,0,10">
-                            <ComboBox Style="{StaticResource ComboBoxStyle}" Margin="5, 0, 0, 0" Height="25" Width="150">
-                                <ComboBoxItem>All</ComboBoxItem>
-                                <ComboBoxItem>Group</ComboBoxItem>
-                                <ComboBoxItem>Supergroup</ComboBoxItem>
-                                <ComboBoxItem>Channel</ComboBoxItem>
-                            </ComboBox>
-                            <Button Content="Select" Width="60" Height="25" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}"/>
-                        </StackPanel>
-                        <Grid Grid.Row="3">
+                       
+                        <Grid Grid.Row="2">
                             <DataGrid x:Name="LinksDataGrid" VirtualizingStackPanel.IsVirtualizing="False" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" ColumnWidth="*"
                                       BorderThickness="1" BorderBrush="LightBlue" Background="Transparent"
                                       AlternatingRowBackground="#d8ecfc" RowBackground="White" Grid.Row="2" RowHeight="35" Margin="15, 0, 15, 15" IsReadOnly="True"
@@ -109,7 +112,7 @@
                                         </DataGridTemplateColumn.Header>
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
+                                                <CheckBox IsChecked="{Binding Check, UpdateSourceTrigger=PropertyChanged}" 
                                                           Style="{StaticResource CenteredCheckBoxStyle}"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -128,7 +131,7 @@
                                     VerticalAlignment="Center"
                                     FontSize="16"
                                     Foreground="Gray"
-                                    Grid.Row="3">
+                                    Grid.Row="2">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="{Binding ElementName=LinksDataGrid, Path=Items.Count, Converter={StaticResource ItemsCountToVisibilityConverter}}"/>
@@ -138,33 +141,21 @@
                         </Grid>
 
                     </Grid>
-                    <Grid Grid.Row="4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="450"/>
-                            <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="15,0,0,0">
-                            <TextBlock Text="Select number to join" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"/>
-                            <ComboBox ItemsSource="{Binding ActivePhoneNumbers}" 
-                                      SelectedItem="{Binding SelectedPhoneNumber, Mode=TwoWay}" 
-                                      Style="{StaticResource ComboBoxStyle}" 
-                                      Margin="5, 0, 0, 0" Height="25" Width="150"/>
-                            <CheckBox Content="Join all numbers"
-                                      IsChecked="{Binding IsJoinAllNumbers, Mode=TwoWay}"
-                                      VerticalAlignment="Center" Margin="10,0,0,0" FontSize="14" FontWeight="SemiBold"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="10,0,0,0">
-                            <controls:NumericUpDownControl x:Name="MinDelayControl" Style="{StaticResource NumericUpDownControlStyle}" Width="35" Value="{Binding MinDelay, Mode=TwoWay}"/>
-                            <Label Content="━" VerticalContentAlignment="Center"/>
-                            <controls:NumericUpDownControl x:Name="MaxDelayControl" Style="{StaticResource NumericUpDownControlStyle}" Width="35" Value="{Binding MaxDelay, Mode=TwoWay}"/>
-                            <TextBlock Text="Delay per join" Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Grid.Column="2">
-                            <Button Content="Join Group" Width="75" Height="30" Margin="0,0,0,0" Style="{StaticResource FeatureButtonStyles}" Command="{Binding JoinGroupsCommand}"/>
-                        </StackPanel>
-                    </Grid>
-                </Grid>
+                <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="15,0,0,0">
+                    <TextBlock Text="Select number to join" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"/>
+                    <ComboBox ItemsSource="{Binding ActivePhoneNumbers}" 
+                              SelectedItem="{Binding SelectedPhoneNumber, Mode=TwoWay}" 
+                              Style="{StaticResource ComboBoxStyle}" 
+                              Margin="5, 0, 0, 0" Height="25" Width="150"/>
+                    <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="10,0,0,0">
+                        <controls:NumericUpDownControl x:Name="MinDelayControl" Style="{StaticResource NumericUpDownControlStyle}" Width="35" Value="{Binding MinDelay, Mode=TwoWay}"/>
+                        <Label Content="━" VerticalContentAlignment="Center"/>
+                        <controls:NumericUpDownControl x:Name="MaxDelayControl" Style="{StaticResource NumericUpDownControlStyle}" Width="35" Value="{Binding MaxDelay, Mode=TwoWay}"/>
+                        <TextBlock Text="Delay per join" Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14"/>
+                    </StackPanel>
+                    <Button Content="Join Group" Width="75" Height="30" Margin="10,0,0,0" Style="{StaticResource FeatureButtonStyles}" Command="{Binding JoinGroupsCommand}"/>
+                </StackPanel>
+            </Grid>
             </Border>
         </Grid>
     </UserControl>

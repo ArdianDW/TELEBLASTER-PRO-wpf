@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Windows.Input;
+using System.Windows;
 using Python.Runtime;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
@@ -14,7 +15,6 @@ namespace TELEBLASTER_PRO.ViewModels
     {
         private string _keyword;
         private int _pages = 1;
-        private bool _isHeadless;
         private ObservableCollection<GroupLinks> _groupLinks;
         private bool _isCheckedAll;
         private ObservableCollection<string> _activePhoneNumbers;
@@ -24,7 +24,9 @@ namespace TELEBLASTER_PRO.ViewModels
         private string _groupName;
         private int _totalMember;
         private string _status;
-        private bool _isJoinAllNumbers;
+        private bool _isFiltering;
+        private bool _isJoining;
+        private string _statusText;
 
         public string Keyword
         {
@@ -47,20 +49,6 @@ namespace TELEBLASTER_PRO.ViewModels
                 if (_pages != value)
                 {
                     _pages = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public bool IsHeadless
-        {
-            get => _isHeadless;
-            set
-            {
-                if (_isHeadless != value)
-                {
-                    _isHeadless = value;
-                    Debug.WriteLine($"IsHeadless changed to: {_isHeadless}");
                     OnPropertyChanged();
                 }
             }
@@ -184,30 +172,64 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        public bool IsJoinAllNumbers
+        public int TotalLinks => GroupLinks?.Count ?? 0;
+        public int TotalTarget { get; set; } = 0;
+        public int Success { get; set; } = 0;
+        public int Fail { get; set; } = 0;
+
+        public bool IsFiltering
         {
-            get => _isJoinAllNumbers;
+            get => _isFiltering;
             set
             {
-                if (_isJoinAllNumbers != value)
+                if (_isFiltering != value)
                 {
-                    _isJoinAllNumbers = value;
-                    Debug.WriteLine($"IsJoinAllNumbers changed to: {_isJoinAllNumbers}");
+                    _isFiltering = value;
+                    OnPropertyChanged();
+                    UpdateStatusText();
+                }
+            }
+        }
+
+        public bool IsJoining
+        {
+            get => _isJoining;
+            set
+            {
+                if (_isJoining != value)
+                {
+                    _isJoining = value;
+                    OnPropertyChanged();
+                    UpdateStatusText();
+                }
+            }
+        }
+
+        public string StatusText
+        {
+            get => _statusText;
+            private set
+            {
+                if (_statusText != value)
+                {
+                    _statusText = value;
                     OnPropertyChanged();
                 }
             }
         }
 
         public ICommand StartCommand { get; }
-        public ICommand FilterLinksCommand { get; }
         public ICommand JoinGroupsCommand { get; }
+        public ICommand DeleteLinksCommand { get; }
+        public ICommand FilterLinksCommand { get; }
 
         public GroupFinderViewModel()
         {
             Debug.WriteLine("GroupFinderViewModel initialized.");
             StartCommand = new RelayCommand(StartAutomation);
-            FilterLinksCommand = new RelayCommand(async _ => await FilterLinksAsync());
             JoinGroupsCommand = new RelayCommand(async _ => await JoinSelectedGroupsAsync());
+            DeleteLinksCommand = new RelayCommand(DeleteLinks);
+            FilterLinksCommand = new RelayCommand(async _ => await FilterLinksAsync());
             GroupLinks = ExtractedDataStore.Instance.GroupLinks;
             GroupLinks.CollectionChanged += GroupLinks_CollectionChanged;
 
@@ -228,6 +250,10 @@ namespace TELEBLASTER_PRO.ViewModels
             {
                 link.PropertyChanged += GroupLink_PropertyChanged;
             }
+            OnPropertyChanged(nameof(TotalLinks));
+            OnPropertyChanged(nameof(TotalTarget));
+            OnPropertyChanged(nameof(Success));
+            OnPropertyChanged(nameof(Fail));
         }
 
         private void GroupLink_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -243,14 +269,14 @@ namespace TELEBLASTER_PRO.ViewModels
             dynamic driver = null;
             try
             {
-                Debug.WriteLine($"Starting automation with IsHeadless: {IsHeadless}");
+                Debug.WriteLine("Starting automation");
                 Debug.WriteLine($"Keyword: {Keyword}, Pages: {Pages}");
 
                 using (Py.GIL())
                 {
-                    dynamic groupFinder = Py.Import("groupFinder");
+                    dynamic groupFinder = Py.Import("Backend.groupFinder");
                     Debug.WriteLine("Calling automate_group_finding function...");
-                    string result = groupFinder.automate_group_finding(Keyword, Pages, !IsHeadless);
+                    string result = groupFinder.automate_group_finding(Keyword, Pages);
                     Debug.WriteLine($"Function call completed with result: {result}");
                 }
 
@@ -300,79 +326,6 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        private async Task FilterLinksAsync()
-        {
-            Debug.WriteLine("FilterLinksAsync started.");
-
-            var activeSessions = Account.GetAccountsFromDatabase()
-                                        .Where(account => account.Status == "Active")
-                                        .Select(account => account.SessionName)
-                                        .ToList();
-
-            if (activeSessions.Count == 0)
-            {
-                Debug.WriteLine("No active sessions found.");
-                return;
-            }
-
-            int sessionIndex = 0;
-            int linksPerUser = 5;
-
-            try
-            {
-                using (Py.GIL())
-                {
-                    dynamic py = Py.Import("functions");
-
-                    for (int i = 0; i < GroupLinks.Count; i++)
-                    {
-                        var link = GroupLinks[i];
-                        if (link.Check == 1)
-                        {
-                            string session = activeSessions[sessionIndex];
-                            Debug.WriteLine($"Processing link: {link.Link} with session: {session}");
-                            
-                            // Panggil fungsi Python untuk mendapatkan tipe grup
-                            string groupType = py.get_group_type(session, link.Link);
-                            Debug.WriteLine($"Link: {link.Link}, Group Type: {groupType}");
-
-                            // Perbarui tipe grup di model dan database
-                            if (groupType == "supergroup" || groupType == "channel" || groupType == "group" || groupType == "invalid link or not a group/channel" || groupType == "invite link expired")
-                            {
-                                link.Type = groupType == "invalid link or not a group/channel" ? "invalid" : groupType;
-                                if (groupType == "invite link expired")
-                                {
-                                    link.Type = "expired";
-                                }
-
-                                // Update database with new type
-                                var connection = DatabaseConnection.Instance;
-                                {
-                                    link.UpdateCheckStatusInDatabase();
-                                }
-
-                                // Panggil OnPropertyChanged untuk memperbarui UI
-                                link.OnPropertyChanged(nameof(link.Type));
-                            }
-
-                            // Update UI
-                            OnPropertyChanged(nameof(GroupLinks));
-
-                            // Switch session after processing a set number of links
-                            if ((i + 1) % linksPerUser == 0)
-                            {
-                                sessionIndex = (sessionIndex + 1) % activeSessions.Count;
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"An error occurred during filtering: {ex.Message}");
-            }
-            Debug.WriteLine("FilterLinksAsync completed.");
-        }
 
         private void SaveCheckedLinksToDatabase()
         {
@@ -388,6 +341,13 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private async Task JoinSelectedGroupsAsync()
         {
+            IsJoining = true;
+            UpdateStatusText();
+
+            // Set TotalTarget to the number of selected links
+            TotalTarget = GroupLinks.Count(l => l.Check == 1);
+            OnPropertyChanged(nameof(TotalTarget));
+
             var random = new Random();
             int minDelay = 5; // Default minimum delay
             int maxDelay = 8; // Default maximum delay
@@ -396,19 +356,10 @@ namespace TELEBLASTER_PRO.ViewModels
             if (MaxDelay > 0) maxDelay = MaxDelay;
 
             Debug.WriteLine("JoinSelectedGroupsAsync started.");
+            Debug.WriteLine($"Total checked links: {TotalTarget}");
 
-            // Log status checkbox "Join all numbers"
-            Debug.WriteLine($"IsJoinAllNumbers is checked: {IsJoinAllNumbers}");
-
-            // Tentukan nomor yang akan digunakan berdasarkan status checkbox
-            var phoneNumbersToUse = IsJoinAllNumbers ? ActivePhoneNumbers : new ObservableCollection<string> { SelectedPhoneNumber };
-
-            // Debugging: Log daftar nomor yang akan digunakan
-            Debug.WriteLine("Phone numbers to use:");
-            foreach (var phoneNumber in phoneNumbersToUse)
-            {
-                Debug.WriteLine(phoneNumber);
-            }
+            var phoneNumbersToUse = new ObservableCollection<string> { SelectedPhoneNumber };
+            Debug.WriteLine($"Using phone number: {SelectedPhoneNumber}");
 
             foreach (var link in GroupLinks.Where(l => l.Check == 1))
             {
@@ -422,34 +373,42 @@ namespace TELEBLASTER_PRO.ViewModels
                     try
                     {
                         var (success, groupName, totalMember) = await JoinGroupAsync(sessionName, groupLink);
+                        Debug.WriteLine($"Join result: success={success}, groupName={groupName}, totalMember={totalMember}");
 
-                        if (success)
+                        App.Current.Dispatcher.Invoke(() =>
                         {
-                            link.GroupName = groupName;
-                            link.TotalMember = totalMember ?? 0;
-                            link.Status = "Success";
-                            Debug.WriteLine($"Successfully joined group: {groupName} with {totalMember} members.");
+                            if (success)
+                            {
+                                link.GroupName = groupName;
+                                link.TotalMember = totalMember ?? 0;
+                                link.Status = "Success";
+                                Success++; // Increment success count
+                                Debug.WriteLine($"Successfully joined group: {groupName} with {totalMember} members.");
+                            }
+                            else
+                            {
+                                link.Status = "Failed";
+                                Fail++; // Increment fail count
+                                Debug.WriteLine($"Failed to join group: {groupLink}");
+                            }
 
-                            // Panggil OnPropertyChanged untuk setiap properti yang diubah
                             link.OnPropertyChanged(nameof(link.GroupName));
                             link.OnPropertyChanged(nameof(link.TotalMember));
                             link.OnPropertyChanged(nameof(link.Status));
-                        }
-                        else
-                        {
-                            link.Status = "Failed";
-                            Debug.WriteLine($"Failed to join group: {groupLink}");
-                            link.OnPropertyChanged(nameof(link.Status));
-                        }
+                        });
                     }
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"Exception occurred while joining group: {ex.Message}");
                         link.Status = "Failed";
+                        Fail++; // Increment fail count
                         link.OnPropertyChanged(nameof(link.Status));
                     }
 
-                    // Delay sebelum bergabung dengan grup berikutnya
+                    // Update UI for Success and Fail counts
+                    OnPropertyChanged(nameof(Success));
+                    OnPropertyChanged(nameof(Fail));
+
                     int delay = random.Next(minDelay, maxDelay) * 1000; // Convert to milliseconds
                     Debug.WriteLine($"Waiting for {delay / 1000} seconds before next join.");
                     await Task.Delay(delay);
@@ -457,8 +416,9 @@ namespace TELEBLASTER_PRO.ViewModels
             }
 
             Debug.WriteLine("JoinSelectedGroupsAsync completed.");
+            IsJoining = false;
+            UpdateStatusText();
 
-            // Simpan perubahan ke database
             SaveCheckedLinksToDatabase();
         }
 
@@ -466,11 +426,10 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             using (Py.GIL())
             {
-                dynamic py = Py.Import("functions");
+                dynamic py = Py.Import("Backend.functions");
                 Debug.WriteLine($"Calling Python function join_group with session: {sessionName} and link: {groupLink}");
                 dynamic result = py.join_group(sessionName, groupLink);
 
-                // Ekstrak nilai dari PyObject
                 bool success = result[0].As<bool>();
                 string groupName = result[1].As<string>();
                 int? totalMember = result[2].IsNone() ? (int?)null : result[2].As<int>();
@@ -485,6 +444,140 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             var account = Account.GetAccountsFromDatabase().FirstOrDefault(a => a.Phone == phoneNumber);
             return account?.SessionName;
+        }
+
+        private void DeleteLinks(object parameter)
+        {
+            try
+            {
+                // Show confirmation dialog
+                var result = MessageBox.Show("Are you sure you want to delete all links?", "Delete Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+                // If the user selects "Yes", proceed with deletion
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Delete all links from the database
+                    var connection = DatabaseConnection.Instance;
+                    TELEBLASTER_PRO.Models.GroupLinks.DeleteAllLinksFromDatabase();
+
+                    // Clear all links from the collection
+                    GroupLinks.Clear();
+
+                    // Reset total data
+                    TotalTarget = 0;
+                    Success = 0;
+                    Fail = 0;
+
+                    // Call OnPropertyChanged to update the UI
+                    OnPropertyChanged(nameof(TotalLinks));
+                    OnPropertyChanged(nameof(TotalTarget));
+                    OnPropertyChanged(nameof(Success));
+                    OnPropertyChanged(nameof(Fail));
+
+                    Debug.WriteLine("All links deleted successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"An error occurred while deleting links: {ex.Message}");
+            }
+        }
+
+        private async Task FilterLinksAsync()
+        {
+            IsFiltering = true;
+            UpdateStatusText();
+            var activeAccounts = GetActiveAccounts().ToList();
+            if (!activeAccounts.Any())
+            {
+                Debug.WriteLine("No active accounts available for filtering.");
+                IsFiltering = false;
+                UpdateStatusText();
+                return;
+            }
+
+            int accountIndex = 0;
+            int linksPerAccount = 5; // Set jumlah link per akun
+            var random = new Random();
+
+            bool allLinksFiltered = false;
+            while (!allLinksFiltered)
+            {
+                try
+                {
+                    for (int i = 0; i < GroupLinks.Count; i++)
+                    {
+                        if (i >= GroupLinks.Count)
+                        {
+                            allLinksFiltered = true;
+                            break;
+                        }
+
+                        var link = GroupLinks[i];
+                        string currentSession = activeAccounts[accountIndex].SessionName;
+
+                        Debug.WriteLine($"Filtering link: {link.Link} using session: {currentSession}");
+
+                        using (Py.GIL())
+                        {
+                            dynamic functions = Py.Import("Backend.functions");
+                            var result = functions.get_group_type(currentSession, link.Link);
+                            string groupType = result.As<string>();
+
+                            // Logging hasil dari Python
+                            Debug.WriteLine($"Filter result for {link.Link}: groupType={groupType}");
+
+                            link.Type = groupType;
+                            link.OnPropertyChanged(nameof(link.Type));
+
+                            // Update type in database
+                            link.UpdateTypeInDatabase();
+                        }
+
+                        int delay = random.Next(3, 5) * 1000; // Tambahkan jeda
+                        await Task.Delay(delay);
+
+                        if ((i + 1) % linksPerAccount == 0 && activeAccounts.Count > 1)
+                        {
+                            accountIndex = (accountIndex + 1) % activeAccounts.Count;
+                            await Task.Delay(5000); // Tambahkan jeda setelah setiap batch
+                        }
+                    }
+
+                    allLinksFiltered = true; // Semua link berhasil difilter
+                }
+                catch (PythonException pe)
+                {
+                    Debug.WriteLine($"Python error during link filtering: {pe.Message}");
+                    break; // Exit loop on Python exceptions
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error during link filtering: {ex.Message}");
+                    break; // Exit loop on other exceptions
+                }
+                finally
+                {
+                    IsFiltering = false;
+                    UpdateStatusText();
+                }
+            }
+        }
+
+        private void UpdateStatusText()
+        {
+            if (IsJoining)
+            {
+                StatusText = "Joining...";
+            }
+            else if (IsFiltering)
+            {
+                StatusText = "Filtering Links...";
+            }
+            else
+            {
+                StatusText = string.Empty;
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

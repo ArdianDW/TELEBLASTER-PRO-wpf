@@ -6,7 +6,7 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.functions.messages import GetFullChatRequest
-from telethon.tl.types import InputPeerEmpty, Channel, Chat
+from telethon.tl.types import InputPeerEmpty, Channel, Chat, User
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import ChannelParticipantsSearch, ChatParticipant, ChatParticipantAdmin, ChatParticipantCreator
 from telethon.tl.functions.contacts import GetContactsRequest
@@ -37,8 +37,14 @@ def get_db_path():
     app_data_path = os.environ['LOCALAPPDATA']
     return os.path.join(app_data_path, "TELEBLASTER_PRO", "teleblaster.db")
 
+def get_session_path(session_name):
+    app_data_path = os.environ['LOCALAPPDATA']
+    session_dir = os.path.join(app_data_path, "TELEBLASTER_PRO", "sessions")
+    return os.path.join(session_dir, session_name)
+
 def check_account_login_sync(session_name):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     try:
         client.connect()
         if not client.is_user_authorized():
@@ -54,7 +60,8 @@ def check_account_login_sync(session_name):
 
 
 def load_joined_groups(session_name):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     try:
         client.connect()
         if not client.is_user_authorized():
@@ -89,7 +96,8 @@ def load_joined_groups(session_name):
     finally:
         client.disconnect()
 async def extract_groups_and_channels(session_name):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)    
     await client.start()
     dialogs = await client.get_dialogs()
     groups_and_channels = [
@@ -123,7 +131,8 @@ async def extract_members(session_name, group_id, group_name, notify_callback, s
     global stop_extraction
     stop_extraction = False 
 
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)    
     await client.start()
 
     try:
@@ -235,7 +244,8 @@ def stop_extraction_sync():
     stop_extraction_process()
 
 def extract_contacts(session_name):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)    
     client.start()
 
     contacts = client(GetContactsRequest(hash=0))
@@ -261,7 +271,8 @@ def extract_contacts(session_name):
 
 def get_group_type(session_name, group_link):
     async def _get_group_type():
-        client = TelegramClient(session_name, api_id, api_hash)
+        session_path = get_session_path(session_name)
+        client = TelegramClient(session_path, api_id, api_hash)
         await client.start()
 
         try:
@@ -287,7 +298,7 @@ def get_group_type(session_name, group_link):
                     else:
                         return "group"
                 else:
-                    return "invalid link or not a group/channel"
+                    return "invalid"
             else:
                 username = group_link.split('/')[-1]
                 result = await client(ResolveUsernameRequest(username))
@@ -303,11 +314,11 @@ def get_group_type(session_name, group_link):
                     else:
                         return "group"
                 else:
-                    return "invalid link or not a group/channel"
+                    return "invalid"
         except errors.InviteHashInvalidError:
-            return "invalid invite link"
+            return "invalid"
         except errors.InviteHashExpiredError:
-            return "invite link expired"
+            return "expired"
         except Exception as e:
             return "error"
         finally:
@@ -316,7 +327,8 @@ def get_group_type(session_name, group_link):
     return asyncio.run(_get_group_type())
 
 async def join_group_async(session_name, group_link):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     await client.start()
 
     try:
@@ -358,7 +370,8 @@ def join_group(session_name, group_link):
     return asyncio.run(join_group_async(session_name, group_link))
 
 async def validate_phone_number(session, phone_number):
-    client = TelegramClient(session, api_id, api_hash)
+    session_path = get_session_path(session)
+    client = TelegramClient(session_path, api_id, api_hash)
     try:
         await client.connect()
         if not await client.is_user_authorized():
@@ -385,7 +398,8 @@ def validate_phone_number_sync(session, phone_number):
     return asyncio.run(validate_phone_number(session, phone_number))
 
 async def invite_to_group_async(session_name, group_link, contact_id):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     await client.start()
 
     try:
@@ -421,36 +435,54 @@ async def invite_to_group_async(session_name, group_link, contact_id):
 def invite_to_group(session_name, group_link, contact_id):
     return asyncio.run(invite_to_group_async(session_name, group_link, contact_id))
 
-async def invite_members(session_name, group_link, member_ids, min_delay, max_delay):
-    client = TelegramClient(session_name, api_id, api_hash)
+async def invite_members(session_name, group_link, member_ids, member_usernames, min_delay, max_delay):
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     await client.start()
 
     try:
-        # Convert all member IDs to long
-        member_ids = [int(member_id) for member_id in member_ids]
-
         chat = await client.get_entity(group_link)
         if isinstance(chat, Channel):
             if chat.megagroup or chat.broadcast:
-                for member_id in member_ids:
-                    user = await client.get_input_entity(member_id)
+                for member_id, member_username in zip(member_ids, member_usernames):
+                    member_id = int(member_id)
+                    user = None
                     try:
+                        member_id = int(member_id)
+                        user = await client.get_input_entity(member_id)
                         await client(InviteToChannelRequest(chat, [user]))
-                        delay = random.randint(min_delay, max_delay)
-                        print(f"Waiting for {delay} seconds before next invite.")
-                        time.sleep(delay)
                     except Exception as e:
-                        return False, f"Failed to invite {member_id}: {str(e)}"
-        elif isinstance(chat, Chat):
-            for member_id in member_ids:
-                user = await client.get_input_entity(member_id)
-                try:
-                    await client(AddChatUserRequest(chat.id, user, fwd_limit=10))
+                        print(f"Error inviting member ID {member_id}: {e}")
+                        try:
+                            user = await client.get_input_entity(member_username)
+                            await client(InviteToChannelRequest(chat, [user]))
+                        except Exception as e:
+                            print(f"Error inviting username {member_username}: {e}")
+                            return False, f"Failed to invite {member_id} or {member_username}: {str(e)}"
+
                     delay = random.randint(min_delay, max_delay)
                     print(f"Waiting for {delay} seconds before next invite.")
                     time.sleep(delay)
+        elif isinstance(chat, Chat):
+            for member_id, member_username in zip(member_ids, member_usernames):
+                member_id = int(member_id)
+                user = None
+                try:
+                    member_id = int(member_id)
+                    user = await client.get_input_entity(member_id)
+                    await client(AddChatUserRequest(chat.id, user, fwd_limit=10))
                 except Exception as e:
-                    return False, f"Failed to add {member_id}: {str(e)}"
+                    print(f"Error adding member ID {member_id}: {e}")
+                    try:
+                        user = await client.get_input_entity(member_username)
+                        await client(AddChatUserRequest(chat.id, user, fwd_limit=10))
+                    except Exception as e:
+                        print(f"Error adding username {member_username}: {e}")
+                        return False, f"Failed to add {member_id} or {member_username}: {str(e)}"
+
+                delay = random.randint(min_delay, max_delay)
+                print(f"Waiting for {delay} seconds before next add.")
+                time.sleep(delay)
         else:
             return False, "Unknown chat type"
 
@@ -460,8 +492,9 @@ async def invite_members(session_name, group_link, member_ids, min_delay, max_de
     finally:
         await client.disconnect()
 
-def invite_members_sync(session_name, group_link, member_ids, min_delay, max_delay):
-    return asyncio.run(invite_members(session_name, group_link, member_ids, min_delay, max_delay))
+
+def invite_members_sync(session_name, group_link, member_ids, member_usernames, min_delay, max_delay):
+    return asyncio.run(invite_members(session_name, group_link, member_ids, member_usernames, min_delay, max_delay))
 
 def process_spintax(text):
     pattern = r"\{([^{}]*)\}"
@@ -470,13 +503,14 @@ def process_spintax(text):
     return text
 
 async def send_message_async(session_name, message_text, recipient_ids, recipient_usernames, min_delay=3, max_delay=5, attachment_file_path=None):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     await client.start()
 
     try:
         for recipient_id, recipient_username in zip(recipient_ids, recipient_usernames):
             recipient_id = int(recipient_id)
-            user = await client.get_input_entity(recipient_id)
+            user = None
 
             # Process Spintax here for each message
             processed_message = process_spintax(message_text)
@@ -485,6 +519,7 @@ async def send_message_async(session_name, message_text, recipient_ids, recipien
 
             try:
                 # Try sending the message using recipient ID
+                user = await client.get_input_entity(recipient_id)
                 if attachment_file_path:
                     await client.send_file(user, attachment_file_path, caption=processed_message)
                     print(f"File sent to {recipient_id} with message: {processed_message}")
@@ -493,14 +528,15 @@ async def send_message_async(session_name, message_text, recipient_ids, recipien
                     print(f"Message sent to {recipient_id}")
             except Exception as e:
                 print(f"Error sending message to ID {recipient_id}: {e}")
+
+                # If sending by ID fails, try sending by username
                 try:
-                    # If sending by ID fails, try sending by username
-                    username = await client.get_input_entity(recipient_username)
+                    user = await client.get_input_entity(recipient_username)
                     if attachment_file_path:
-                        await client.send_file(username, attachment_file_path, caption=processed_message)
+                        await client.send_file(user, attachment_file_path, caption=processed_message)
                         print(f"File sent to {recipient_username} with message: {processed_message}")
                     else:
-                        await client(SendMessageRequest(username, processed_message))
+                        await client(SendMessageRequest(user, processed_message))
                         print(f"Message sent to {recipient_username}")
                 except Exception as e:
                     print(f"Error sending message to username {recipient_username}: {e}")
@@ -511,7 +547,7 @@ async def send_message_async(session_name, message_text, recipient_ids, recipien
             print(f"Waiting for {delay} seconds before sending the next message.")
             time.sleep(delay)
 
-        return True, "Messages sent successfully"
+        return True, "Messages sent ya"
     except Exception as e:
         return False, f"Error sending message: {str(e)}"
     finally:
@@ -521,15 +557,16 @@ def send_message(session_name, message_text, recipient_ids, recipient_usernames,
     return asyncio.run(send_message_async(session_name, message_text, recipient_ids, recipient_usernames, min_delay, max_delay, attachment_file_path))
 
 def logout_and_delete_session_sync(session_name):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     try:
         client.connect()
         if client.is_user_authorized():
             client.log_out()
             print(f"Logged out from {session_name}")
 
-        # Delete the session file
-        session_file = f"{session_name}.session"
+        # Dapatkan jalur file sesi
+        session_file = f"{session_path}.session"
         if os.path.exists(session_file):
             os.remove(session_file)
             print(f"Deleted session file for {session_name}")
@@ -540,7 +577,8 @@ def logout_and_delete_session_sync(session_name):
         client.disconnect()
 
 async def send_to_user_async(session_name, target, message_text, attachment_file_path=None):
-    client = TelegramClient(session_name, api_id, api_hash)
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
     await client.start()
 
     try:
@@ -571,7 +609,7 @@ async def send_to_user_async(session_name, target, message_text, attachment_file
             print(f"Error sending message to {target}: {e}")
             return False, f"Error sending message: {str(e)}"
 
-        return True, "Message sent successfully"
+        return True, "Message sent ya"
     except Exception as e:
         print(f"Error: {e}")
         return False, f"Error: {str(e)}"
@@ -580,5 +618,42 @@ async def send_to_user_async(session_name, target, message_text, attachment_file
 
 def send_to_user(session_name, target, message_text, attachment_file_path=None):
     return asyncio.run(send_to_user_async(session_name, target, message_text, attachment_file_path))
+
+def extract_chats(session_name):
+    session_path = get_session_path(session_name)
+    client = TelegramClient(session_path, api_id, api_hash)
+    client.start()
+
+    try:
+        # Ambil entitas dialog
+        dialogs = client.get_dialogs()
+
+        # Koneksi ke database
+        conn = sqlite3.connect(get_db_path(), timeout=10)
+        c = conn.cursor()
+
+        # Hapus chat yang ada untuk sesi ini
+        c.execute("DELETE FROM user_chats WHERE user_id = (SELECT id FROM user_sessions WHERE session_name = ?)", (session_name,))
+
+        for dialog in dialogs:
+            if dialog.is_user:
+                user = dialog.entity
+                chat_id = user.id
+                access_hash = user.access_hash
+                first_name = user.first_name or ''
+                last_name = user.last_name or ''
+                username = user.username or ''
+                
+                # Pastikan semua variabel adalah tipe data yang didukung
+                c.execute("INSERT INTO user_chats (user_id, chat_user_id, access_hash, first_name, last_name, username) VALUES (?, ?, ?, ?, ?, ?)",
+                          (chat_id, chat_id, access_hash, first_name, last_name, username))
+        conn.commit()
+    except Exception as e:
+        print(f"Error extracting chats: {e}")
+    finally:
+        conn.close()
+        client.disconnect()
+
+
 
 

@@ -4,6 +4,7 @@ using System.Data.SQLite;
 using System.ComponentModel;
 using System.Diagnostics;
 using TELEBLASTER_PRO.Helpers;
+using System.Runtime.CompilerServices;
 
 namespace TELEBLASTER_PRO.Models
 {
@@ -57,7 +58,7 @@ namespace TELEBLASTER_PRO.Models
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        public void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -98,6 +99,29 @@ namespace TELEBLASTER_PRO.Models
             using (var command = new SQLiteCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@check", Check);
+                command.Parameters.AddWithValue("@id", Id);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public static void DeleteAllLinksFromDatabase()
+        {
+            using (var connection = DatabaseConnection.Instance)
+            {
+                using (var command = new SQLiteCommand("DELETE FROM group_links", connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateTypeInDatabase()
+        {
+            var connection = DatabaseConnection.Instance;
+            string query = "UPDATE group_links SET type = @type WHERE id = @id";
+            using (var command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@type", Type);
                 command.Parameters.AddWithValue("@id", Id);
                 command.ExecuteNonQuery();
             }

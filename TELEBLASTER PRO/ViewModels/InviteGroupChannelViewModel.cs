@@ -92,6 +92,61 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        private int _totalContacts;
+        public int TotalContacts
+        {
+            get => _totalContacts;
+            set
+            {
+                _totalContacts = value;
+                OnPropertyChanged(nameof(TotalContacts));
+            }
+        }
+
+        private int _totalTarget;
+        public int TotalTarget
+        {
+            get => _totalTarget;
+            set
+            {
+                _totalTarget = value;
+                OnPropertyChanged(nameof(TotalTarget));
+            }
+        }
+
+        private int _successCount;
+        public int SuccessCount
+        {
+            get => _successCount;
+            set
+            {
+                _successCount = value;
+                OnPropertyChanged(nameof(SuccessCount));
+            }
+        }
+
+        private int _failCount;
+        public int FailCount
+        {
+            get => _failCount;
+            set
+            {
+                _failCount = value;
+                OnPropertyChanged(nameof(FailCount));
+            }
+        }
+
+        private bool _isStopInviteRequested;
+        public bool IsStopInviteRequested
+        {
+            get => _isStopInviteRequested;
+            set
+            {
+                _isStopInviteRequested = value;
+                OnPropertyChanged(nameof(IsStopInviteRequested));
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged(string propertyName)
@@ -107,7 +162,6 @@ namespace TELEBLASTER_PRO.ViewModels
             StopInviteCommand = new RelayCommand(_ => StopInvite(), _ => IsInviting);
             ClearContactsCommand = new RelayCommand(_ => ClearContacts());
 
-            // Initialize ActivePhoneNumbers
             var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active");
             ActivePhoneNumbers = new ObservableCollection<string>(activeAccounts.Select(account => account.Phone));
         }
@@ -127,11 +181,11 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     using (var workbook = new XLWorkbook(filePath))
                     {
-                        var worksheet = workbook.Worksheet(1); // Assuming the data is in the first worksheet
-                        var rows = worksheet.RowsUsed().Skip(1); // Skip header row
+                        var worksheet = workbook.Worksheet(1); 
+                        var rows = worksheet.RowsUsed().Skip(1); 
 
-                        // Clear existing contacts and add new ones
                         ContactsList.Clear();
+                        int index = 1;
                         foreach (var row in rows)
                         {
                             var contactId = row.Cell(2).GetValue<string>();
@@ -144,6 +198,7 @@ namespace TELEBLASTER_PRO.ViewModels
                             var contact = new Contacts
                             {
                                 Id = row.Cell(1).GetValue<int>(),
+                                No = index++,
                                 ContactId = contactId,
                                 AccessHash = row.Cell(3).GetValue<string>(),
                                 FirstName = row.Cell(4).GetValue<string>(),
@@ -155,8 +210,9 @@ namespace TELEBLASTER_PRO.ViewModels
                         }
                     }
 
+                    TotalContacts = ContactsList.Count; 
                     MessageBox.Show("Contacts imported successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Error importing contacts: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -222,92 +278,86 @@ namespace TELEBLASTER_PRO.ViewModels
             await Task.Run(() =>
             {
                 bool allInvitesSent = false;
-                while (!allInvitesSent)
+                TotalTarget = ContactsList.Count(c => c.IsChecked); // Update total target
+
+                while (!allInvitesSent && !IsStopInviteRequested)
                 {
                     try
                     {
-                        IsInviting = true;
-                        CurrentInviteStatus = "Starting invite process...";
-                        OnPropertyChanged(nameof(CurrentInviteStatus));
-                        Debug.WriteLine("Starting invite process...");
-
+                        IsInviting = true; // Mulai proses undangan
                         var selectedContacts = ContactsList.Where(c => c.IsChecked).ToList();
-                        if (selectedContacts.Count == 0)
-                        {
-                            CurrentInviteStatus = "No contacts selected for invitation.";
-                            OnPropertyChanged(nameof(CurrentInviteStatus));
-                            Debug.WriteLine(CurrentInviteStatus);
-                            IsInviting = false;
-                            return;
-                        }
+                        int minDelay = MinDelay;
+                        int maxDelay = MaxDelay;
+                        int membersPerNumber = MembersPerNumber;
+
+                        Debug.WriteLine($"Group Link: {GroupLink}");
+                        Debug.WriteLine("Selected Contacts: " + string.Join(", ", selectedContacts.Select(c => c.ContactId)));
+                        Debug.WriteLine($"Min Delay: {minDelay}, Max Delay: {maxDelay}");
+                        Debug.WriteLine($"Members Per Number: {membersPerNumber}");
+                        Debug.WriteLine($"Running on thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+                        Debug.WriteLine($"SwitchNumberAutomatically: {SwitchNumberAutomatically}");
 
                         var activeAccounts = Account.GetAccountsFromDatabase().Where(account => account.Status == "Active").ToList();
-                        if (activeAccounts.Count == 0)
+                        if (SwitchNumberAutomatically && activeAccounts.Any())
                         {
-                            CurrentInviteStatus = "No active accounts available.";
-                            OnPropertyChanged(nameof(CurrentInviteStatus));
-                            Debug.WriteLine(CurrentInviteStatus);
-                            IsInviting = false;
-                            return;
-                        }
+                            Debug.WriteLine("Switch is ON: Automatically changing accounts.");
+                            int totalContacts = selectedContacts.Count;
+                            int accountIndex = 0;
 
-                        int membersPerNumber = MembersPerNumber;
-                        int totalContacts = selectedContacts.Count;
-                        int currentIndex = 0;
-
-                        if (SwitchNumberAutomatically)
-                        {
-                            while (currentIndex < totalContacts)
+                            for (int i = 0; i < totalContacts; i += membersPerNumber)
                             {
-                                foreach (var account in activeAccounts)
+                                var sessionName = activeAccounts[accountIndex].SessionName;
+                                var batchMembers = selectedContacts.Skip(i).Take(membersPerNumber).ToList();
+
+                                foreach (var member in batchMembers)
                                 {
-                                    if (currentIndex >= totalContacts)
-                                        break;
+                                    if (IsStopInviteRequested) break; // Check if stop is requested
 
-                                    string sessionName = account.SessionName;
-                                    var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
+                                    CurrentInviteStatus = $"Inviting {member.FirstName ?? "Unknown"}";
+                                    OnPropertyChanged(nameof(CurrentInviteStatus));
 
-                                    var result = InviteMembers(sessionName, GroupLink, members);
-                                    foreach (var member in members)
+                                    Debug.WriteLine($"Using session: {sessionName} for member: {member.FirstName ?? "Unknown"}");
+
+                                    var result = InviteMembers(sessionName, GroupLink, new List<Contacts> { member });
+                                    if (result)
                                     {
-                                        member.Status = result ? "Success" : "Failed";
+                                        SuccessCount++;
                                     }
-
-                                    currentIndex += membersPerNumber;
+                                    else
+                                    {
+                                        FailCount++;
+                                    }
                                 }
+
+                                accountIndex = (accountIndex + 1) % activeAccounts.Count;
                             }
                         }
                         else
                         {
-                            var selectedAccount = activeAccounts.FirstOrDefault(a => a.Phone == SelectedPhoneNumber);
-                            if (selectedAccount == null)
+                            Debug.WriteLine("Switch is OFF: Using a single account.");
+                            string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
+                            Debug.WriteLine($"Using session: {sessionName} for all members.");
+
+                            foreach (var member in selectedContacts)
                             {
-                                CurrentInviteStatus = "Selected account is not active.";
+                                if (IsStopInviteRequested) break; // Check if stop is requested
+
+                                CurrentInviteStatus = $"Inviting {member.FirstName ?? "Unknown"}";
                                 OnPropertyChanged(nameof(CurrentInviteStatus));
-                                Debug.WriteLine(CurrentInviteStatus);
-                                IsInviting = false;
-                                return;
-                            }
 
-                            string sessionName = selectedAccount.SessionName;
-                            while (currentIndex < totalContacts)
-                            {
-                                var members = selectedContacts.Skip(currentIndex).Take(membersPerNumber).ToList();
-
-                                var result = InviteMembers(sessionName, GroupLink, members);
-                                foreach (var member in members)
+                                var result = InviteMembers(sessionName, GroupLink, new List<Contacts> { member });
+                                if (result)
                                 {
-                                    member.Status = result ? "Success" : "Failed";
+                                    SuccessCount++;
                                 }
-
-                                currentIndex += membersPerNumber;
+                                else
+                                {
+                                    FailCount++;
+                                }
                             }
                         }
 
-                        allInvitesSent = true;
-                        CurrentInviteStatus = "All members invited successfully";
-                        OnPropertyChanged(nameof(CurrentInviteStatus));
-                        Debug.WriteLine(CurrentInviteStatus);
+                        allInvitesSent = true; // Semua undangan berhasil dikirim
                     }
                     catch (PythonException pe)
                     {
@@ -315,35 +365,31 @@ namespace TELEBLASTER_PRO.ViewModels
                         {
                             Debug.WriteLine("Retrying due to Python error: " + pe.Message);
                             Task.Delay(1000).Wait(); // Wait before retrying
-                            continue; // Retry the entire process
+                            Task.Run(() => StartInvite()); // Start a new task to retry
+                            return;
                         }
                         else
                         {
-                            CurrentInviteStatus = $"Python error during invitation: {pe.Message}";
-                            OnPropertyChanged(nameof(CurrentInviteStatus));
-                            Debug.WriteLine(CurrentInviteStatus);
+                            Debug.WriteLine($"Python error during invitation: {pe.Message}");
                             break; // Exit loop if it's a different Python error
                         }
                     }
                     catch (Exception ex)
                     {
-                        if (ex.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
-                        {
-                            Debug.WriteLine("Retrying due to general error: " + ex.Message);
-                            Task.Delay(1000).Wait(); // Wait before retrying
-                            continue; // Retry the entire process
-                        }
-                        else
-                        {
-                            CurrentInviteStatus = $"Error during invitation: {ex.Message}";
-                            OnPropertyChanged(nameof(CurrentInviteStatus));
-                            Debug.WriteLine(CurrentInviteStatus);
-                            break; // Exit loop on other exceptions
-                        }
+                        Debug.WriteLine($"Error during invitation: {ex.Message}");
+                        break; // Exit loop on other exceptions
                     }
                     finally
                     {
-                        IsInviting = false;
+                        IsInviting = false; // Selesai proses undangan
+                        if (IsStopInviteRequested)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                MessageBox.Show("Invitation process stopped.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                            });
+                        }
+                        IsStopInviteRequested = false; // Reset IsStopInviteRequested
                     }
                 }
             });
@@ -351,7 +397,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private void StopInvite()
         {
-            IsInviting = false;
+            IsStopInviteRequested = true;
             CurrentInviteStatus = "Invitation process stopped.";
             OnPropertyChanged(nameof(CurrentInviteStatus));
         }
@@ -362,9 +408,10 @@ namespace TELEBLASTER_PRO.ViewModels
             {
                 using (Py.GIL())
                 {
-                    dynamic py = Py.Import("functions");
+                    dynamic py = Py.Import("Backend.functions");
                     var memberIds = members.Select(m => m.ContactId).ToList();
-                    dynamic result = py.invite_members_sync(sessionName, groupLink, memberIds, MinDelay, MaxDelay);
+                    var memberUsernames = members.Select(m => m.UserName).ToList();
+                    dynamic result = py.invite_members_sync(sessionName, groupLink, memberIds, memberUsernames, MinDelay, MaxDelay);
                     
                     bool success = result[0].As<bool>();
                     string message = result[1].As<string>();
@@ -372,6 +419,14 @@ namespace TELEBLASTER_PRO.ViewModels
                     foreach (var member in members)
                     {
                         member.Status = success ? "Success" : "Failed";
+                        if (success)
+                        {
+                            SuccessCount++;
+                        }
+                        else
+                        {
+                            FailCount++;
+                        }
                     }
 
                     Debug.WriteLine($"Invite result: {success}, Message: {message}");
@@ -383,13 +438,14 @@ namespace TELEBLASTER_PRO.ViewModels
                 foreach (var member in members)
                 {
                     member.Status = "Failed";
+                    FailCount++;
                 }
                 
                 if (ex.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
                 {
                     Debug.WriteLine("Retrying due to error: " + ex.Message);
-                    Task.Delay(1000).Wait(); // Wait before retrying
-                    return false; // Indicate failure to trigger retry in StartInvite
+                    Task.Delay(1000).Wait(); 
+                    return false;
                 }
                 
                 CurrentInviteStatus = $"Error during invitation: {ex.Message}";
@@ -399,7 +455,6 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        // Method to get session name from phone number
         private string GetSessionNameFromPhoneNumber(string phoneNumber)
         {
             var account = Account.GetAccountsFromDatabase().FirstOrDefault(a => a.Phone == phoneNumber);

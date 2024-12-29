@@ -241,7 +241,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     using (Py.GIL())
                     {
-                        dynamic py = Py.Import("functions");
+                        dynamic py = Py.Import("Backend.functions");
                         var groups = py.extract_groups_and_channels_sync(account.SessionName);
 
                         foreach (var group in groups)
@@ -334,7 +334,7 @@ namespace TELEBLASTER_PRO.ViewModels
                         {
                             using (Py.GIL())
                             {
-                                dynamic py = Py.Import("functions");
+                                dynamic py = Py.Import("Backend.functions");
                                 py.extract_members_sync(sessionName, groupId, SelectedGroup.GroupName, new Action<string>(NotifyCallback), new Action<string>(UpdateExtractStatus));
                             }
                             return LoadExtractedMembers(groupId);
@@ -441,7 +441,7 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             using (Py.GIL())
             {
-                dynamic py = Py.Import("functions");
+                dynamic py = Py.Import("Backend.functions");
                 py.stop_extraction_sync();
             }
             

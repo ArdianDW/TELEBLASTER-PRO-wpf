@@ -21,7 +21,7 @@
                    FontSize="23" 
                    FontWeight="Bold" 
                    Grid.Row="0" 
-                   Margin="15,20,0,0" Height="40" Width="223"/>
+                   Margin="15,20,0,0" Height="40" Width="223" VerticalAlignment="Top"/>
 
                 <Separator Grid.Row="1" Margin="15,0,15,10" Background="Gray" Height="1"/>
 

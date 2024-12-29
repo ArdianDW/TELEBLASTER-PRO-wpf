@@ -184,7 +184,8 @@
                             <StackPanel Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Left" Margin="15,0,0,0">
                                 <Button Content="Extract Contacts" Width="75" Height="20" Margin="0,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
                                         Command="{Binding ExtractContactsCommand}"/>
-                                <Button Content="Extract Chats" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"/>
+                                <Button Content="Extract Chats" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
+                                        Command="{Binding ExtractChatsCommand}"/>
                                 <Button Content="Import Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
                                         Command="{Binding ImportContactsCommand}"/>
                                 <Button Content="Export Contacts" Width="75" Height="20" Margin="5,0,0,0" Style="{StaticResource FeatureButtonStyles}" FontSize="10"
@@ -228,12 +229,12 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="No" Width="40" Binding="{Binding Id}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="No" Width="40" Binding="{Binding No}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="User ID" Width="*" Binding="{Binding ContactId}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Access Hash" Width="*" Binding="{Binding AccessHash}" ElementStyle="{StaticResource LeftAlignedTextBlockStyle}"/>
                                 <DataGridTextColumn Header="First Name" Width="*" Binding="{Binding FirstName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Last Name" Width="*" Binding="{Binding LastName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                                <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                                <DataGridTextColumn Header="Username" Width="*" Binding="{Binding UserName}" ElementStyle="{StaticResource LeftAlignedTextBlockStyle}"/>
                                 <DataGridTextColumn Header="Status" Width="*" Binding="{Binding Status}" ElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                             </DataGrid.Columns>
                         </DataGrid>

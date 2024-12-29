@@ -29,6 +29,12 @@ namespace TELEBLASTER_PRO.ViewModels
         public int MinDelay { get; set; }
         public int MaxDelay { get; set; }
 
+        public string Target { get; set; }
+
+        public string ClickToChatSelectedPhoneNumber { get; set; }
+        public string ClickToChatMessageText { get; set; }
+        public string ClickToChatTarget { get; set; }
+
         private ExtractedDataStore()
         {
             GroupLinks = new ObservableCollection<GroupLinks>();

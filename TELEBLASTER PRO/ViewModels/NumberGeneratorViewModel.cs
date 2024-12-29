@@ -9,6 +9,10 @@ using Python.Runtime;
 using System.Diagnostics;
 using TELEBLASTER_PRO.Helpers;
 using System.Windows;
+using System.IO;
+using ClosedXML.Excel;
+using System.Linq;
+using Microsoft.Win32;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -66,6 +70,9 @@ namespace TELEBLASTER_PRO.ViewModels
         public ICommand ValidateCommand { get; }
         public ICommand ClearNumbersCommand { get; }
         public ICommand StopValidationCommand { get; }
+        public ICommand ExportRawNumbersCommand { get; }
+        public ICommand ImportNumbersCommand { get; }
+        public ICommand ExportValidNumbersCommand { get; }
 
         public bool IsLoading
         {
@@ -123,6 +130,9 @@ namespace TELEBLASTER_PRO.ViewModels
             ValidateCommand = new RelayCommand(_ => Task.Run(() => ValidateNumbersAsync()));
             ClearNumbersCommand = new RelayCommand(_ => ClearNumbers());
             StopValidationCommand = new RelayCommand(_ => StopValidation = true, _ => IsValidating);
+            ExportRawNumbersCommand = new RelayCommand(_ => ExportRawNumbersToExcel());
+            ImportNumbersCommand = new RelayCommand(_ => ImportNumbersFromExcel());
+            ExportValidNumbersCommand = new RelayCommand(_ => ExportValidNumbersToExcel());
         }
 
         private void GenerateNumbers()
@@ -207,7 +217,7 @@ namespace TELEBLASTER_PRO.ViewModels
                         {
                             using (Py.GIL())
                             {
-                                dynamic functions = Py.Import("functions");
+                                dynamic functions = Py.Import("Backend.functions");
                                 var result = functions.validate_phone_number_sync(currentSession, number.PhoneNumber);
                                 bool isValid = result[0].As<bool>();
                                 dynamic userInfo = result[1];
@@ -255,17 +265,8 @@ namespace TELEBLASTER_PRO.ViewModels
                 }
                 catch (PythonException pe)
                 {
-                    if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
-                    {
-                        Debug.WriteLine("Retrying due to Python error: " + pe.Message);
-                        await Task.Delay(1000); // Wait before retrying
-                        continue; // Retry the validation process
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"Python error during number validation: {pe.Message}");
-                        break; // Exit loop if it's a different Python error
-                    }
+                    Debug.WriteLine($"Error threading: {pe.message}")
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -305,6 +306,156 @@ namespace TELEBLASTER_PRO.ViewModels
                 ValidNumbers = 0; // Reset valid numbers
             }
         }
+
+        private void ExportRawNumbersToExcel()
+        {
+            try
+            {
+                var rawNumbers = GeneratedNumbers.Where(n => n.Status == null || n.Status == string.Empty).ToList();
+
+                if (rawNumbers.Count == 0)
+                {
+                    MessageBox.Show("No raw numbers to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("Raw Numbers");
+                    worksheet.Cell(1, 1).Value = "Name";
+                    worksheet.Cell(1, 2).Value = "Phone Number";
+                    worksheet.Cell(1, 3).Value = "Username";
+                    worksheet.Cell(1, 4).Value = "User ID";
+                    worksheet.Cell(1, 5).Value = "Access Hash";
+                    worksheet.Cell(1, 6).Value = "Status";
+
+                    for (int i = 0; i < rawNumbers.Count; i++)
+                    {
+                        var number = rawNumbers[i];
+                        worksheet.Cell(i + 2, 1).Value = number.PrefixName;
+                        worksheet.Cell(i + 2, 2).Value = number.PhoneNumber;
+                        worksheet.Cell(i + 2, 3).Value = number.Username;
+                        worksheet.Cell(i + 2, 4).Value = number.UserId;
+                        worksheet.Cell(i + 2, 5).Value = number.AccessHash;
+                        worksheet.Cell(i + 2, 6).Value = number.Status;
+                    }
+
+                    var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                    {
+                        Filter = "Excel Workbook|*.xlsx",
+                        Title = "Save Raw Numbers",
+                        FileName = ""
+                    };
+
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        workbook.SaveAs(saveFileDialog.FileName);
+                        MessageBox.Show("Numbers exported successfully.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while exporting numbers: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ImportNumbersFromExcel()
+        {
+            try
+            {
+                var openFileDialog = new OpenFileDialog
+                {
+                    Filter = "Excel Workbook|*.xlsx",
+                    Title = "Select a File to Import"
+                };
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    using (var workbook = new XLWorkbook(openFileDialog.FileName))
+                    {
+                        var worksheet = workbook.Worksheet(1);
+                        var rows = worksheet.RowsUsed().Skip(1); // Skip header row
+
+                        foreach (var row in rows)
+                        {
+                            var number = new NumberGenerated
+                            {
+                                PrefixName = row.Cell(1).GetValue<string>(),
+                                PhoneNumber = row.Cell(2).GetValue<string>(),
+                                Username = row.Cell(3).GetValue<string>(),
+                                UserId = row.Cell(4).GetValue<string>(),
+                                AccessHash = row.Cell(5).GetValue<string>(),
+                                Status = row.Cell(6).GetValue<string>()
+                            };
+
+                            GeneratedNumbers.Add(number);
+                        }
+                    }
+
+                    MessageBox.Show("Numbers imported successfully.", "Import", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while importing numbers: {ex.Message}", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ExportValidNumbersToExcel()
+        {
+            try
+            {
+                var validNumbers = GeneratedNumbers.Where(n => n.Status == "Valid").ToList();
+
+                if (validNumbers.Count == 0)
+                {
+                    MessageBox.Show("No valid numbers to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("Valid Numbers");
+                    worksheet.Cell(1, 1).Value = "No";
+                    worksheet.Cell(1, 2).Value = "User ID";
+                    worksheet.Cell(1, 3).Value = "Access Hash";
+                    worksheet.Cell(1, 4).Value = "First Name";
+                    worksheet.Cell(1, 5).Value = "Last Name";
+                    worksheet.Cell(1, 6).Value = "Username";
+
+                    for (int i = 0; i < validNumbers.Count; i++)
+                    {
+                        var number = validNumbers[i];
+                        worksheet.Cell(i + 2, 1).Value = i + 1; // Nomor urut
+                        worksheet.Cell(i + 2, 2).Value = number.UserId;
+                        worksheet.Cell(i + 2, 3).Value = number.AccessHash;
+                        worksheet.Cell(i + 2, 4).Value = number.PrefixName; // Assuming PrefixName is used as First Name
+                        worksheet.Cell(i + 2, 5).Value = ""; // Last Name is empty
+                        worksheet.Cell(i + 2, 6).Value = number.Username;
+                    }
+
+                    var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                    {
+                        Filter = "Excel Workbook|*.xlsx",
+                        Title = "Save Valid Numbers",
+                        FileName = "ValidNumbers.xlsx"
+                    };
+
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        workbook.SaveAs(saveFileDialog.FileName);
+                        MessageBox.Show("Valid numbers exported successfully.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while exporting valid numbers: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        
 
         public event PropertyChangedEventHandler PropertyChanged;
 

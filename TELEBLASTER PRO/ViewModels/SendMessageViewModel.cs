@@ -87,6 +87,7 @@ namespace TELEBLASTER_PRO.ViewModels
         }
 
         public ICommand ExtractContactsCommand { get; }
+        public ICommand ExtractChatsCommand { get; }
         public ICommand SendMessageCommand { get; }
         public ICommand ExportContactsCommand { get; }
         public ICommand ImportContactsCommand { get; }
@@ -225,6 +226,7 @@ namespace TELEBLASTER_PRO.ViewModels
             _accountViewModel = accountViewModel;
             ActivePhoneNumbers = new ObservableCollection<string>(GetActiveAccounts().Select(a => a.Phone));
             ExtractContactsCommand = new RelayCommand(_ => ExtractContacts());
+            ExtractChatsCommand = new RelayCommand(_ => ExtractChats());
             BrowseFileCommand = new RelayCommand(BrowseFile);
             ExportContactsCommand = new RelayCommand(_ => ExportContacts());
             ImportContactsCommand = new RelayCommand(_ => ImportContacts());
@@ -256,13 +258,40 @@ namespace TELEBLASTER_PRO.ViewModels
 
             using (Py.GIL())
             {
-                dynamic py = Py.Import("functions");
+                dynamic py = Py.Import("Backend.functions");
                 py.extract_contacts(sessionName);
             }
 
+            ContactsList.Clear();
             LoadContactsFromDatabase();
 
-            // Setelah ekstraksi selesai, perbarui TotalContacts
+            MessageBox.Show("Contacts extraction completed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            TotalContacts = ContactsList.Count;
+            ResetData();
+        }
+
+        public void ExtractChats()
+        {
+            if (string.IsNullOrEmpty(SelectedPhoneNumber))
+            {
+                MessageBox.Show("Please select a phone number.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
+            Debug.WriteLine($"Starting chat extraction for session: {sessionName}");
+
+            using (Py.GIL())
+            {
+                dynamic py = Py.Import("Backend.functions");
+                py.extract_chats(sessionName);
+            }
+            ContactsList.Clear();
+            Debug.WriteLine("Chat extraction completed. Loading chats into ContactsList.");
+            LoadChatsIntoContactsList(); // Load chats into ContactsList after extraction
+            Debug.WriteLine($"Total chats loaded: {ContactsList.Count}");
+            MessageBox.Show("Chat extraction completed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
             TotalContacts = ContactsList.Count;
             ResetData();
         }
@@ -363,9 +392,9 @@ namespace TELEBLASTER_PRO.ViewModels
                     {
                         var worksheet = workbook.Worksheet(1);
                         var rows = worksheet.RowsUsed().Skip(1);
-
+                        ContactsList.Clear();
                         var contacts = new List<Contacts>();
-
+                        int index = 1;
                         foreach (var row in rows)
                         {
                             var contactId = row.Cell(2).GetValue<string>();
@@ -374,10 +403,11 @@ namespace TELEBLASTER_PRO.ViewModels
                                 MessageBox.Show("ContactId is empty or invalid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                                 continue;
                             }
-
+                            
                             var contact = new Contacts
                             {
                                 Id = row.Cell(1).GetValue<int>(),
+                                No = index++,
                                 ContactId = contactId,
                                 AccessHash = row.Cell(3).GetValue<string>(),
                                 FirstName = row.Cell(4).GetValue<string>(),
@@ -462,8 +492,8 @@ namespace TELEBLASTER_PRO.ViewModels
 
                                     using (Py.GIL())
                                     {
-                                        dynamic py = Py.Import("functions");
-                                        var result = py.send_message(sessionName, messageText, batchRecipientIds, batchRecipientUsernames, minDelay, maxDelay, AttachmentFilePath);
+                                        dynamic py = Py.Import("Backend.functions");
+                                        var result = py.send_message(sessionName, messageText, new List<string> { recipientId }, new List<string> { contact?.UserName }, minDelay, maxDelay, AttachmentFilePath);
                                         bool success = result[0];
                                         string message = result[1];
 
@@ -478,9 +508,6 @@ namespace TELEBLASTER_PRO.ViewModels
                                         {
                                             FailCount++;
                                         }
-
-                                        // Debugging the return result from Python function
-                                        Debug.WriteLine($"Python function return: Success = {success}, Message = {message}");
                                     }
                                 }
 
@@ -502,8 +529,8 @@ namespace TELEBLASTER_PRO.ViewModels
 
                                 using (Py.GIL())
                                 {
-                                    dynamic py = Py.Import("functions");
-                                    var result = py.send_message(sessionName, messageText, recipientIds, recipientUsernames, minDelay, maxDelay, AttachmentFilePath);
+                                    dynamic py = Py.Import("Backend.functions");
+                                    var result = py.send_message(sessionName, messageText, new List<string> { recipientId }, new List<string> { contact?.UserName }, minDelay, maxDelay, AttachmentFilePath);
                                     bool success = result[0];
                                     string message = result[1];
 
@@ -518,9 +545,6 @@ namespace TELEBLASTER_PRO.ViewModels
                                     {
                                         FailCount++;
                                     }
-
-                                    // Debugging the return result from Python function
-                                    Debug.WriteLine($"Python function return: Success = {success}, Message = {message}");
                                 }
                             }
                         }
@@ -608,5 +632,44 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        // Method to load chats into ContactsList
+        private void LoadChatsIntoContactsList()
+        {
+            ContactsList.Clear();
+            var connection = DatabaseConnection.Instance;
+            try
+            {
+                using (var cmd = new SQLiteCommand("SELECT * FROM user_chats", connection))
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        int index = 1;
+                        while (reader.Read())
+                        {
+                            var contact = new Contacts
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                No = index++, // Setel nomor urut
+                                ContactId = reader.GetString(reader.GetOrdinal("chat_user_id")),
+                                AccessHash = reader.GetString(reader.GetOrdinal("access_hash")),
+                                FirstName = reader.GetString(reader.GetOrdinal("first_name")),
+                                LastName = reader.GetString(reader.GetOrdinal("last_name")),
+                                UserName = reader.GetString(reader.GetOrdinal("username")),
+                                IsChecked = false
+                            };
+                            ContactsList.Add(contact);
+                        }
+                        Debug.WriteLine($"Total chats loaded: {ContactsList.Count}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading chats into ContactsList: {ex.Message}");
+            }
+        }
+
+        
     }
 }

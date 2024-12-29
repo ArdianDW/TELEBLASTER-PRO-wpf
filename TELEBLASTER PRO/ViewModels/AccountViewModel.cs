@@ -20,6 +20,7 @@ namespace TELEBLASTER_PRO.ViewModels
         private bool _isRefreshing;
         private int _totalAccounts;
         private int _totalActiveAccounts;
+        private string _statusBarText;
 
         public ObservableCollection<Account> Accounts
         {
@@ -72,11 +73,26 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        public string StatusBarText
+        {
+            get => _statusBarText;
+            set
+            {
+                if (_statusBarText != value)
+                {
+                    _statusBarText = value;
+                    OnPropertyChanged(nameof(StatusBarText));
+                }
+            }
+        }
+
         public ICommand RefreshCommand { get; }
         public ICommand AddAccountCommand { get; }
         public ICommand LoginCommand { get; }
         public ICommand LogoutCommand { get; }
         public ICommand DeleteAccountCommand { get; }
+        public ICommand LogoutAllCommand { get; }
+        public ICommand DeleteAllCommand { get; }
 
         public AccountViewModel()
         {
@@ -86,11 +102,17 @@ namespace TELEBLASTER_PRO.ViewModels
             LoginCommand = new RelayCommand(Login, CanExecuteLogin);
             LogoutCommand = new RelayCommand(Logout, CanExecuteLogout);
             DeleteAccountCommand = new RelayCommand(DeleteAccount, CanExecuteDelete);
+            LogoutAllCommand = new RelayCommand(async _ => await LogoutAllAccountsAsync(), CanExecuteLogoutAll);
+            DeleteAllCommand = new RelayCommand(_ => DeleteAllAccounts());
         }
 
         public async Task RefreshAccountsAsync(object parameter)
         {
-            System.Diagnostics.Debug.WriteLine("RefreshAccountsAsync method called");
+            Debug.WriteLine("RefreshAccountsAsync method called");
+
+            // Perbarui status bar
+            StatusBarText = "Refreshing...";
+
             IsRefreshing = true;
             try
             {
@@ -119,12 +141,13 @@ namespace TELEBLASTER_PRO.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("An error occurred during refresh: " + ex.Message);
+                Debug.WriteLine("An error occurred during refresh: " + ex.Message);
             }
             finally
             {
                 IsRefreshing = false;
-                System.Diagnostics.Debug.WriteLine("Refresh completed");
+                StatusBarText = "Refresh completed"; // Atau setel ke string kosong jika tidak ingin menampilkan pesan
+                Debug.WriteLine("Refresh completed");
             }
         }
 
@@ -139,7 +162,7 @@ namespace TELEBLASTER_PRO.ViewModels
                     {
                         using (Py.GIL())
                         {
-                            dynamic py = Py.Import("functions");
+                            dynamic py = Py.Import("Backend.functions");
                             isLoggedIn = py.check_account_login_sync(sessionName);
                         }
                     });
@@ -158,7 +181,7 @@ namespace TELEBLASTER_PRO.ViewModels
             try
             {
                 string pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "python.exe");
-                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "addAccount.py");
+                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "Lib", "site-packages", "Backend", "login.py");
 
                 Debug.WriteLine($"Python Path: {pythonPath}");
                 Debug.WriteLine($"Script Path: {scriptPath}");
@@ -193,7 +216,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 try
                 {
                     string pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "python.exe");
-                    string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "login.py");
+                    string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "Lib", "site-packages", "Backend", "login.py");
 
                     Debug.WriteLine($"Python Path: {pythonPath}");
                     Debug.WriteLine($"Script Path: {scriptPath}");
@@ -240,7 +263,7 @@ namespace TELEBLASTER_PRO.ViewModels
                         {
                             using (Py.GIL())
                             {
-                                dynamic py = Py.Import("functions");
+                                dynamic py = Py.Import("Backend.functions");
                                 py.logout_and_delete_session_sync(account.SessionName);
                             }
                         });
@@ -314,15 +337,15 @@ namespace TELEBLASTER_PRO.ViewModels
                 {
                     if (SelectedAccount.Status == "Active")
                     {
+                        Account.DeleteAccountFromDatabase(SelectedAccount);
                         await LogoutAccount(SelectedAccount);
+                        Accounts.Remove(SelectedAccount);
+                        UpdateAccountCounts();
+                    } else {
+                        Account.DeleteAccountFromDatabase(SelectedAccount);
+                        Accounts.Remove(SelectedAccount);
+                        UpdateAccountCounts();
                     }
-
-                    // Remove from database
-                    Account.DeleteAccountFromDatabase(SelectedAccount);
-
-                    // Remove from collection
-                    Accounts.Remove(SelectedAccount);
-                    UpdateAccountCounts();
                 }
             }
         }
@@ -330,6 +353,61 @@ namespace TELEBLASTER_PRO.ViewModels
         private bool CanExecuteDelete(object parameter)
         {
             return SelectedAccount != null;
+        }
+
+        private async Task LogoutAllAccountsAsync()
+        {
+            // Tampilkan dialog konfirmasi
+            var result = MessageBox.Show(
+                "Are you sure you want to log out all accounts?",
+                "Logout All Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                StatusBarText = "Logging out all accounts...";
+
+                var activeAccounts = Accounts.Where(account => account.Status == "Active").ToList();
+                foreach (var account in activeAccounts)
+                {
+                    await LogoutAccount(account);
+                }
+
+                StatusBarText = "All accounts logged out.";
+
+                UpdateAccountCounts();
+            }
+        }
+
+        private bool CanExecuteLogoutAll(object parameter)
+        {
+            return Accounts.Any(account => account.Status == "Active");
+        }
+
+        private void DeleteAllAccounts()
+        {
+            if (Accounts.Any(account => account.Status == "Active"))
+            {
+                MessageBox.Show("Please logout all accounts first.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show(
+                "Are you sure you want to delete all accounts?",
+                "Delete All Confirmation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                foreach (var account in Accounts.ToList())
+                {
+                    Account.DeleteAccountFromDatabase(account);
+                    Accounts.Remove(account);
+                }
+                UpdateAccountCounts();
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -353,6 +431,23 @@ namespace TELEBLASTER_PRO.ViewModels
         public IEnumerable<Account> GetActiveAccounts()
         {
             return Accounts.Where(account => account.Status == "Active");
+        }
+
+        private void DeleteSessionFile(string sessionName)
+        {
+            try
+            {
+                string sessionPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TELEBLASTER_PRO", "sessions", $"{sessionName}.session");
+                if (File.Exists(sessionPath))
+                {
+                    File.Delete(sessionPath);
+                    Debug.WriteLine($"Session file {sessionPath} deleted successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error deleting session file {sessionName}: {ex.Message}");
+            }
         }
     }
 }

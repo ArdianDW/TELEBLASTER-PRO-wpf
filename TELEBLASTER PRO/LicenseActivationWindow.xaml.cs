@@ -17,6 +17,9 @@ using System.Diagnostics;
 using TELEBLASTER_PRO.Helpers;
 using System.Net.Http;
 using Newtonsoft.Json;
+using System.Xml;
+using System.Windows.Threading;
+using System.Reflection;
 
 namespace TELEBLASTER_PRO
 {
@@ -26,12 +29,14 @@ namespace TELEBLASTER_PRO
     public partial class LicenseActivationWindow : Window
     {
         public bool IsLicenseActivated { get; private set; }
+        private DispatcherTimer downloadTimer;
+        private int downloadProgress;
+        private bool _isUpdating = false;
 
         public LicenseActivationWindow()
         {
             InitializeComponent();
             CheckLicenseStatus();
-
             string hardwareId = GetHardwareId();
             Debug.WriteLine($"Hardware ID: {hardwareId}");
         }
@@ -167,6 +172,8 @@ namespace TELEBLASTER_PRO
 
         private async void CheckLicenseStatus()
         {
+            if (_isUpdating) return;
+
             if (LoadActivationStatus())
             {
                 CheckingGrid.Visibility = Visibility.Visible;
