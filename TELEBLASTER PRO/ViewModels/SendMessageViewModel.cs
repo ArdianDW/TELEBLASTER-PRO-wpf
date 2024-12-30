@@ -19,11 +19,8 @@ using System.Runtime.InteropServices;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
-    public class SendMessageViewModel : INotifyPropertyChanged
+    internal class SendMessageViewModel : INotifyPropertyChanged
     {
-        private static SendMessageViewModel _instance;
-        public static SendMessageViewModel Instance => _instance ??= new SendMessageViewModel();
-
         private readonly AccountViewModel _accountViewModel;
 
         public ObservableCollection<string> ActivePhoneNumbers { get; }
