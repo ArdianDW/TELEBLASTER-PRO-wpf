@@ -16,6 +16,7 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Net.Http;
 using TELEBLASTER_PRO.Views.UserControls;
+using TELEBLASTER_PRO.Models;
 using Python.Runtime;
 using System.Diagnostics;
 using AutoUpdaterDotNET;
@@ -44,6 +45,8 @@ namespace TELEBLASTER_PRO
 
             HelpButton.Click += HelpButton_Click;
             CommunityButton.Click += CommunityButton_Click;
+
+            RefreshAccountsAsync();
         }
 
         private void InitializePython()
@@ -320,6 +323,76 @@ namespace TELEBLASTER_PRO
             Dispatcher.Invoke(() =>
             {
                 UpdateStatusTextBlock.Text = "Installing update...";
+            });
+        }
+
+        private async Task RefreshAccountsAsync()
+        {
+            await Task.Run(() =>
+            {
+                Debug.WriteLine("RefreshAccountsAsync method called in MainWindow");
+
+                bool refreshSuccessful = false;
+                while (!refreshSuccessful)
+                {
+                    try
+                    {
+                        var accounts = new List<Account>();
+                        var accountsFromDb = Account.GetAccountsFromDatabase();
+                        foreach (var account in accountsFromDb)
+                        {
+                            account.Status = CheckAccountLoginAsync(account.SessionName).Result ? "Active" : "Inactive";
+                            account.UpdateStatusInDatabase();
+                            accounts.Add(account);
+                        }
+                        refreshSuccessful = true;
+                    }
+                    catch (PythonException pe)
+                    {
+                        if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                        {
+                            Debug.WriteLine("Retrying refresh due to Python error: " + pe.Message);
+                            Task.Delay(1000).Wait(); // Optional delay before retrying
+                        }
+                        else
+                        {
+                            Debug.WriteLine("An error occurred during refresh: " + pe.Message);
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("An error occurred during refresh: " + ex.Message);
+                        break;
+                    }
+                }
+
+                Debug.WriteLine("Refresh completed in MainWindow");
+            });
+        }
+
+        private async Task<bool> CheckAccountLoginAsync(string sessionName)
+        {
+            return await Task.Run(() =>
+            {
+                bool isLoggedIn = false;
+                try
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        using (Py.GIL())
+                        {
+                            dynamic py = Py.Import("Backend.functions");
+                            isLoggedIn = py.check_account_login_sync(sessionName);
+                        }
+                    });
+                    System.Diagnostics.Debug.WriteLine($"Status login akun {sessionName}: {(isLoggedIn ? "Aktif" : "Tidak Aktif")}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error saat memeriksa status login untuk {sessionName}: {ex.Message}");
+                }
+                return isLoggedIn;
             });
         }
     }

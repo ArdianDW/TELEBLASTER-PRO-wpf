@@ -106,8 +106,6 @@ namespace TELEBLASTER_PRO.ViewModels
             DeleteAccountCommand = new RelayCommand(DeleteAccount, CanExecuteDelete);
             LogoutAllCommand = new RelayCommand(async _ => await LogoutAllAccountsAsync(), CanExecuteLogoutAll);
             DeleteAllCommand = new RelayCommand(_ => DeleteAllAccounts());
-
-            RefreshAccountsAsync();
         }
 
         public Task RefreshAccountsAsync()

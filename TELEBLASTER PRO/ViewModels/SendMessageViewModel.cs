@@ -203,6 +203,19 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
+        private bool _isFileSelected;
+        public bool IsFileSelected
+        {
+            get => _isFileSelected;
+            set
+            {
+                _isFileSelected = value;
+                OnPropertyChanged(nameof(IsFileSelected));
+            }
+        }
+
+        public ICommand DeleteFileCommand { get; }
+
         // Import user32.dll for keybd_event function
         [DllImport("user32.dll", SetLastError = true)]
         private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
@@ -221,6 +234,8 @@ namespace TELEBLASTER_PRO.ViewModels
             keybd_event((byte)KeyInterop.VirtualKeyFromKey(modifierKey), 0, KEYEVENTF_KEYUP, 0);
         }
 
+        public ICommand RemoveAttachmentCommand { get; }
+
         public SendMessageViewModel(AccountViewModel accountViewModel)
         {
             _accountViewModel = accountViewModel;
@@ -234,6 +249,8 @@ namespace TELEBLASTER_PRO.ViewModels
             ClearContactsCommand = new RelayCommand(_ => ClearContacts());
             EmojiPickerCommand = new RelayCommand(_ => OpenEmojiPicker());
             StopSendingCommand = new RelayCommand(_ => StopSending = true);
+            RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
+            DeleteFileCommand = new RelayCommand(_ => RemoveAttachment(), _ => IsFileSelected);
 
             // Initialize counts
             TotalContacts = ContactsList.Count;
@@ -319,6 +336,7 @@ namespace TELEBLASTER_PRO.ViewModels
             if (openFileDialog.ShowDialog() == true)
             {
                 AttachmentFilePath = openFileDialog.FileName;
+                IsFileSelected = true; // Set file selected status
             }
         }
 
@@ -670,6 +688,10 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        
+        private void RemoveAttachment()
+        {
+            AttachmentFilePath = string.Empty;
+            IsFileSelected = false; // Reset file selected status
+        }
     }
 }
