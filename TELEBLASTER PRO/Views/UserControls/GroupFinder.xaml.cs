@@ -29,17 +29,19 @@ namespace TELEBLASTER_PRO.Views.UserControls
 
         private void CheckAll_Checked(object sender, RoutedEventArgs e)
         {
-            foreach (var link in ((GroupFinderViewModel)DataContext).GroupLinks)
+            var viewModel = (GroupFinderViewModel)DataContext;
+            foreach (var link in viewModel.GroupLinks)
             {
-                link.IsChecked = true;
+                link.IsChecked = true; // Set IsChecked to true for all links
             }
         }
 
         private void CheckAll_Unchecked(object sender, RoutedEventArgs e)
         {
-            foreach (var link in ((GroupFinderViewModel)DataContext).GroupLinks)
+            var viewModel = (GroupFinderViewModel)DataContext;
+            foreach (var link in viewModel.GroupLinks)
             {
-                link.IsChecked = false;
+                link.IsChecked = false; // Set IsChecked to false for all links
             }
         }
     }

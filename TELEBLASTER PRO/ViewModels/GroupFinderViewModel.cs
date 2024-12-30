@@ -322,10 +322,9 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             foreach (var item in GroupLinks)
             {
-                item.Check = isChecked ? 1 : 0;
+                item.IsChecked = isChecked;
             }
         }
-
 
         private void SaveCheckedLinksToDatabase()
         {
@@ -585,6 +584,12 @@ namespace TELEBLASTER_PRO.ViewModels
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        // Method to check if all items are checked
+        public void UpdateIsCheckedAll()
+        {
+            IsCheckedAll = GroupLinks.All(link => link.IsChecked);
         }
     }
 }

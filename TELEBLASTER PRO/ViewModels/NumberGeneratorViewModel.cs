@@ -265,7 +265,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 }
                 catch (PythonException pe)
                 {
-                    Debug.WriteLine($"Error threading: {pe.message}")
+                    Debug.WriteLine($"Error threading: {pe.Message}");
                     break;
                 }
                 catch (Exception ex)

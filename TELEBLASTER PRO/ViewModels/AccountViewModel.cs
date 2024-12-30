@@ -10,6 +10,8 @@ using TELEBLASTER_PRO.Models;
 using Python.Runtime;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace TELEBLASTER_PRO.ViewModels
 {
@@ -97,58 +99,83 @@ namespace TELEBLASTER_PRO.ViewModels
         public AccountViewModel()
         {
             Accounts = new ObservableCollection<Account>(Account.GetAccountsFromDatabase());
-            RefreshCommand = new RelayCommand(async _ => await RefreshAccountsAsync(null), CanExecuteRefresh);
+            RefreshCommand = new RelayCommand(_ => RefreshAccountsAsync(), CanExecuteRefresh);
             AddAccountCommand = new RelayCommand(AddAccount);
             LoginCommand = new RelayCommand(Login, CanExecuteLogin);
             LogoutCommand = new RelayCommand(Logout, CanExecuteLogout);
             DeleteAccountCommand = new RelayCommand(DeleteAccount, CanExecuteDelete);
             LogoutAllCommand = new RelayCommand(async _ => await LogoutAllAccountsAsync(), CanExecuteLogoutAll);
             DeleteAllCommand = new RelayCommand(_ => DeleteAllAccounts());
+
+            RefreshAccountsAsync();
         }
 
-        public async Task RefreshAccountsAsync(object parameter)
+        public Task RefreshAccountsAsync()
         {
-            Debug.WriteLine("RefreshAccountsAsync method called");
-
-            // Perbarui status bar
-            StatusBarText = "Refreshing...";
-
-            IsRefreshing = true;
-            try
+            return Task.Run(() =>
             {
-                var accountsFromDb = await Task.Run(async () =>
+                Debug.WriteLine("RefreshAccountsAsync method called");
+
+                StatusBarText = "Refreshing...";
+                IsRefreshing = true;
+
+                bool refreshSuccessful = false;
+                while (!refreshSuccessful)
                 {
-                    var accounts = new List<Account>();
-                    var accountsFromDb = Account.GetAccountsFromDatabase();
-                    foreach (var account in accountsFromDb)
+                    try
                     {
-                        account.Status = await CheckAccountLoginAsync(account.SessionName) ? "Active" : "Inactive";
-                        account.UpdateStatusInDatabase(); 
-                        accounts.Add(account);
+                        var accounts = new List<Account>();
+                        var accountsFromDb = Account.GetAccountsFromDatabase();
+                        foreach (var account in accountsFromDb)
+                        {
+                            account.Status = CheckAccountLoginAsync(account.SessionName).Result ? "Active" : "Inactive";
+                            account.UpdateStatusInDatabase();
+                            accounts.Add(account);
+                        }
+                        return accounts;
                     }
-                    return accounts;
-                });
+                    catch (PythonException pe)
+                    {
+                        if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
+                        {
+                            Debug.WriteLine("Retrying refresh due to Python error: " + pe.Message);
+                            Task.Delay(1000).Wait(); // Optional delay before retrying
+                        }
+                        else
+                        {
+                            Debug.WriteLine("An error occurred during refresh: " + pe.Message);
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("An error occurred during refresh: " + ex.Message);
+                        break;
+                    }
+                }
+                return null;
+            }).ContinueWith(task =>
+            {
+                if (task.Result != null)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        Accounts.Clear();
+                        foreach (var account in task.Result)
+                        {
+                            Accounts.Add(account);
+                        }
+                        UpdateAccountCounts();
+                    });
+                }
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    Accounts.Clear();
-                    foreach (var account in accountsFromDb)
-                    {
-                        Accounts.Add(account);
-                    }
-                    UpdateAccountCounts();
+                    IsRefreshing = false;
+                    StatusBarText = "Refresh completed";
+                    Debug.WriteLine("Refresh completed");
                 });
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("An error occurred during refresh: " + ex.Message);
-            }
-            finally
-            {
-                IsRefreshing = false;
-                StatusBarText = "Refresh completed"; // Atau setel ke string kosong jika tidak ingin menampilkan pesan
-                Debug.WriteLine("Refresh completed");
-            }
+            }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private async Task<bool> CheckAccountLoginAsync(string sessionName)
@@ -181,7 +208,7 @@ namespace TELEBLASTER_PRO.ViewModels
             try
             {
                 string pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "python.exe");
-                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "Lib", "site-packages", "Backend", "login.py");
+                string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-embed", "Lib", "site-packages", "Backend", "addAccount.py");
 
                 Debug.WriteLine($"Python Path: {pythonPath}");
                 Debug.WriteLine($"Script Path: {scriptPath}");
@@ -200,7 +227,7 @@ namespace TELEBLASTER_PRO.ViewModels
                 }
 
                 Debug.WriteLine("Finished executing addAccount.py");
-                RefreshAccountsAsync(null);
+                RefreshAccountsAsync();
                 UpdateAccountCounts();
             }
             catch (Exception ex)
@@ -235,7 +262,7 @@ namespace TELEBLASTER_PRO.ViewModels
                     }
 
                     Debug.WriteLine("Finished executing login.py");
-                    RefreshAccountsAsync(null);
+                    RefreshAccountsAsync();
                     UpdateAccountCounts();
                 }
                 catch (Exception ex)
@@ -277,7 +304,7 @@ namespace TELEBLASTER_PRO.ViewModels
 
                         logoutSuccessful = true;
 
-                        await RefreshAccountsAsync(null);
+                        await RefreshAccountsAsync();
                     }
                     catch (PythonException pe)
                     {

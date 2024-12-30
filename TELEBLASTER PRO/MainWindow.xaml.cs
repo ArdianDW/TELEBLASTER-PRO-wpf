@@ -1,4 +1,8 @@
-﻿﻿using System.Text;
+﻿﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -273,15 +277,18 @@ namespace TELEBLASTER_PRO
                     Debug.WriteLine($"Current exe path: {currentExePath}");
                     Debug.WriteLine($"Backup exe path: {backupExePath}");
                     Debug.WriteLine($"Batch file path: {batchFilePath}");
+                    
 
-                    // Buat file batch
                     using (StreamWriter writer = new StreamWriter(batchFilePath))
                     {
                         writer.WriteLine("@echo off");
-                        writer.WriteLine("timeout /t 2 /nobreak > nul");
+                        writer.WriteLine("timeout /t 3 /nobreak > nul");
                         writer.WriteLine($"move /y \"{tempFilePath}\" \"{currentExePath}\"");
+                        writer.WriteLine($"start \"\" \"{currentExePath}\"");
                         writer.WriteLine("exit");
                     }
+
+
 
                     // Jalankan file batch
                     Process.Start(new ProcessStartInfo

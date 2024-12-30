@@ -357,21 +357,21 @@ namespace TELEBLASTER_PRO.ViewModels
                             }
                         }
 
-                        allInvitesSent = true; // Semua undangan berhasil dikirim
+                        allInvitesSent = true; 
                     }
                     catch (PythonException pe)
                     {
                         if (pe.Message.Contains("set_wakeup_fd only works in main thread of the main interpreter"))
                         {
                             Debug.WriteLine("Retrying due to Python error: " + pe.Message);
-                            Task.Delay(1000).Wait(); // Wait before retrying
-                            Task.Run(() => StartInvite()); // Start a new task to retry
+                            Task.Delay(1000).Wait(); 
+                            Task.Run(() => StartInvite());
                             return;
                         }
                         else
                         {
-                            Debug.WriteLine($"Python error during invitation: {pe.Message}");
-                            break; // Exit loop if it's a different Python error
+                            Debug.WriteLine($"Python error during message sending: {pe.Message}");
+                            break;
                         }
                     }
                     catch (Exception ex)

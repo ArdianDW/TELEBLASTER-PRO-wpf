@@ -46,7 +46,7 @@
                                 Width="80" Height="25" 
                                 Margin="10,0,0,0" 
                                 Style="{StaticResource FeatureButtonStyles}"/>
-                        <StackPanel Orientation="Horizontal" x:Name="SendMessageStatusBar" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal" x:Name="StatusBar" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <controls:DonutSpinner  Height="25" Width="25" Duration="0:0:1" SpinnerColor="DodgerBlue" HorizontalAlignment="Left" Margin="10,0,0,0"/>
                             <TextBlock Text="Loading joined groups..." VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14" FontWeight="SemiBold"/>
                         </StackPanel>
