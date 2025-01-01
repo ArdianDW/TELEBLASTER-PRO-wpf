@@ -35,6 +35,10 @@ namespace TELEBLASTER_PRO.ViewModels
         public string ClickToChatMessageText { get; set; }
         public string ClickToChatTarget { get; set; }
 
+        public string GroupFinderKeyword { get; set; }
+
+        public string GroupLink { get; set; }
+
         private ExtractedDataStore()
         {
             GroupLinks = new ObservableCollection<GroupLinks>();

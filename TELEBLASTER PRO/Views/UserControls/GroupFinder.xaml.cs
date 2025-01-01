@@ -24,25 +24,19 @@ namespace TELEBLASTER_PRO.Views.UserControls
         public GroupFinder()
         {
             InitializeComponent();
-            DataContext = new GroupFinderViewModel(); // Set DataContext to GroupFinderViewModel
+            DataContext = new GroupFinderViewModel(); 
         }
 
         private void CheckAll_Checked(object sender, RoutedEventArgs e)
         {
             var viewModel = (GroupFinderViewModel)DataContext;
-            foreach (var link in viewModel.GroupLinks)
-            {
-                link.IsChecked = true; // Set IsChecked to true for all links
-            }
+            viewModel.IsCheckedAll = true; 
         }
 
         private void CheckAll_Unchecked(object sender, RoutedEventArgs e)
         {
             var viewModel = (GroupFinderViewModel)DataContext;
-            foreach (var link in viewModel.GroupLinks)
-            {
-                link.IsChecked = false; // Set IsChecked to false for all links
-            }
+            viewModel.IsCheckedAll = false; 
         }
     }
 }

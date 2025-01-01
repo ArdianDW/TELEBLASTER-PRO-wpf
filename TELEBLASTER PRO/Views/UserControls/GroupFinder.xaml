@@ -112,7 +112,7 @@
                                         </DataGridTemplateColumn.Header>
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <CheckBox IsChecked="{Binding Check, UpdateSourceTrigger=PropertyChanged}" 
+                                                <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" 
                                                           Style="{StaticResource CenteredCheckBoxStyle}"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>

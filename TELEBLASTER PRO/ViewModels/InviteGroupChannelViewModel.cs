@@ -78,7 +78,18 @@ namespace TELEBLASTER_PRO.ViewModels
             }
         }
 
-        public string GroupLink { get; set; }
+        public string GroupLink
+        {
+            get => ExtractedDataStore.Instance.GroupLink;
+            set
+            {
+                if (ExtractedDataStore.Instance.GroupLink != value)
+                {
+                    ExtractedDataStore.Instance.GroupLink = value;
+                    OnPropertyChanged(nameof(GroupLink));
+                }
+            }
+        }
         public string CurrentInviteStatus { get; set; }
 
         private bool _switchNumberAutomatically;

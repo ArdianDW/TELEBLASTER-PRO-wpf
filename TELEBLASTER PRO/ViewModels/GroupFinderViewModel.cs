@@ -30,12 +30,12 @@ namespace TELEBLASTER_PRO.ViewModels
 
         public string Keyword
         {
-            get => ExtractedDataStore.Instance.Keyword;
+            get => ExtractedDataStore.Instance.GroupFinderKeyword;
             set
             {
-                if (ExtractedDataStore.Instance.Keyword != value)
+                if (ExtractedDataStore.Instance.GroupFinderKeyword != value)
                 {
-                    ExtractedDataStore.Instance.Keyword = value;
+                    ExtractedDataStore.Instance.GroupFinderKeyword = value;
                     OnPropertyChanged(nameof(Keyword));
                 }
             }
@@ -320,9 +320,10 @@ namespace TELEBLASTER_PRO.ViewModels
 
         private void UpdateCheckAllItems(bool isChecked)
         {
-            foreach (var item in GroupLinks)
+            foreach (var link in GroupLinks)
             {
-                item.IsChecked = isChecked;
+                link.IsChecked = isChecked;
+                link.OnPropertyChanged(nameof(link.IsChecked));
             }
         }
 
