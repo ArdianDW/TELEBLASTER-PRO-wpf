@@ -272,11 +272,12 @@ namespace TELEBLASTER_PRO.ViewModels
             }
 
             string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
+            int extractorUserId = GetExtractorUserId();
 
             using (Py.GIL())
             {
                 dynamic py = Py.Import("Backend.functions");
-                py.extract_contacts(sessionName);
+                py.extract_contacts(sessionName, extractorUserId);
             }
 
             ContactsList.Clear();
@@ -285,6 +286,12 @@ namespace TELEBLASTER_PRO.ViewModels
             MessageBox.Show("Contacts extraction completed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             TotalContacts = ContactsList.Count;
             ResetData();
+        }
+
+        private int GetExtractorUserId()
+        {
+            var account = GetActiveAccounts().FirstOrDefault(a => a.Phone == SelectedPhoneNumber);
+            return account?.Id ?? 0;
         }
 
         public void ExtractChats()
@@ -296,13 +303,14 @@ namespace TELEBLASTER_PRO.ViewModels
             }
 
             string sessionName = GetSessionNameFromPhoneNumber(SelectedPhoneNumber);
-            Debug.WriteLine($"Starting chat extraction for session: {sessionName}");
+            int extractorUserId = GetExtractorUserId();
 
             using (Py.GIL())
             {
                 dynamic py = Py.Import("Backend.functions");
-                py.extract_chats(sessionName);
+                py.extract_chats(sessionName, extractorUserId);
             }
+
             ContactsList.Clear();
             Debug.WriteLine("Chat extraction completed. Loading chats into ContactsList.");
             LoadChatsIntoContactsList(); // Load chats into ContactsList after extraction
@@ -323,11 +331,13 @@ namespace TELEBLASTER_PRO.ViewModels
         {
             ContactsList.Clear();
             var connection = DatabaseConnection.Instance;
-                var contacts = Contacts.LoadContacts();
-                foreach (var contact in contacts)
-                {
-                    ContactsList.Add(contact);
-                }
+            int extractorUserId = GetExtractorUserId();
+
+            var contacts = Contacts.LoadContacts(extractorUserId);
+            foreach (var contact in contacts)
+            {
+                ContactsList.Add(contact);
+            }
         }
 
         private void BrowseFile(object parameter)
@@ -651,41 +661,27 @@ namespace TELEBLASTER_PRO.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        // Method to load chats into ContactsList
         private void LoadChatsIntoContactsList()
         {
             ContactsList.Clear();
-            var connection = DatabaseConnection.Instance;
-            try
+            int extractorUserId = GetExtractorUserId();
+            var userChats = UserChats.LoadUserChats(extractorUserId);
+            int index = 1;
+            foreach (var chat in userChats)
             {
-                using (var cmd = new SQLiteCommand("SELECT * FROM user_chats", connection))
+                ContactsList.Add(new Contacts
                 {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        int index = 1;
-                        while (reader.Read())
-                        {
-                            var contact = new Contacts
-                            {
-                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                                No = index++, // Setel nomor urut
-                                ContactId = reader.GetString(reader.GetOrdinal("chat_user_id")),
-                                AccessHash = reader.GetString(reader.GetOrdinal("access_hash")),
-                                FirstName = reader.GetString(reader.GetOrdinal("first_name")),
-                                LastName = reader.GetString(reader.GetOrdinal("last_name")),
-                                UserName = reader.GetString(reader.GetOrdinal("username")),
-                                IsChecked = false
-                            };
-                            ContactsList.Add(contact);
-                        }
-                        Debug.WriteLine($"Total chats loaded: {ContactsList.Count}");
-                    }
-                }
+                    Id = chat.Id,
+                    No = index++, // Setel nomor urut
+                    ContactId = chat.ChatUserId,
+                    AccessHash = chat.AccessHash,
+                    FirstName = chat.FirstName,
+                    LastName = chat.LastName,
+                    UserName = chat.UserName,
+                    IsChecked = false
+                });
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error loading chats into ContactsList: {ex.Message}");
-            }
+            Debug.WriteLine($"Total chats loaded: {ContactsList.Count}");
         }
 
         private void RemoveAttachment()

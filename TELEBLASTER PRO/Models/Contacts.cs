@@ -48,14 +48,16 @@ namespace TELEBLASTER_PRO.Models
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public static List<Contacts> LoadContacts()
+        public static List<Contacts> LoadContacts(int extractorUserId)
         {
             var contacts = new List<Contacts>();
-            string query = "SELECT id, user_id, contact_id, access_hash, first_name, last_name, user_name FROM contacts";
+            string query = "SELECT id, user_id, contact_id, access_hash, first_name, last_name, user_name FROM contacts WHERE user_id = @userId";
 
             var connection = DatabaseConnection.Instance;
             using (var command = new SQLiteCommand(query, connection))
             {
+                command.Parameters.AddWithValue("@userId", extractorUserId);
+
                 using (var reader = command.ExecuteReader())
                 {
                     int index = 1;

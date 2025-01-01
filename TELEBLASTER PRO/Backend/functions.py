@@ -243,7 +243,7 @@ def stop_extraction_process():
 def stop_extraction_sync():
     stop_extraction_process()
 
-def extract_contacts(session_name):
+def extract_contacts(session_name, extractor_user_id):
     session_path = get_session_path(session_name)
     client = TelegramClient(session_path, api_id, api_hash)    
     client.start()
@@ -252,8 +252,8 @@ def extract_contacts(session_name):
     conn = sqlite3.connect(get_db_path(), timeout=10)
     c = conn.cursor()
 
-    # Clear existing contacts for the session
-    c.execute("DELETE FROM contacts WHERE user_id = (SELECT id FROM user_sessions WHERE session_name = ?)", (session_name,))
+    # Clear existing contacts for the extractor user
+    c.execute("DELETE FROM contacts WHERE user_id = ?", (extractor_user_id,))
 
     for contact in contacts.users:
         user_id = contact.id
@@ -263,7 +263,7 @@ def extract_contacts(session_name):
         username = contact.username or ""
 
         c.execute("INSERT INTO contacts (user_id, contact_id, access_hash, first_name, last_name, user_name) VALUES (?, ?, ?, ?, ?, ?)",
-                  (user_id, user_id, access_hash, first_name, last_name, username))
+                  (extractor_user_id, user_id, access_hash, first_name, last_name, username))
 
     conn.commit()
     conn.close()
@@ -619,7 +619,7 @@ async def send_to_user_async(session_name, target, message_text, attachment_file
 def send_to_user(session_name, target, message_text, attachment_file_path=None):
     return asyncio.run(send_to_user_async(session_name, target, message_text, attachment_file_path))
 
-def extract_chats(session_name):
+def extract_chats(session_name, extractor_user_id):
     session_path = get_session_path(session_name)
     client = TelegramClient(session_path, api_id, api_hash)
     client.start()
@@ -632,8 +632,8 @@ def extract_chats(session_name):
         conn = sqlite3.connect(get_db_path(), timeout=10)
         c = conn.cursor()
 
-        # Hapus chat yang ada untuk sesi ini
-        c.execute("DELETE FROM user_chats WHERE user_id = (SELECT id FROM user_sessions WHERE session_name = ?)", (session_name,))
+        # Hapus chat yang ada untuk extractor user
+        c.execute("DELETE FROM user_chats WHERE user_id = ?", (extractor_user_id,))
 
         for dialog in dialogs:
             if dialog.is_user:
@@ -646,7 +646,7 @@ def extract_chats(session_name):
                 
                 # Pastikan semua variabel adalah tipe data yang didukung
                 c.execute("INSERT INTO user_chats (user_id, chat_user_id, access_hash, first_name, last_name, username) VALUES (?, ?, ?, ?, ?, ?)",
-                          (chat_id, chat_id, access_hash, first_name, last_name, username))
+                          (extractor_user_id, chat_id, access_hash, first_name, last_name, username))
         conn.commit()
     except Exception as e:
         print(f"Error extracting chats: {e}")
